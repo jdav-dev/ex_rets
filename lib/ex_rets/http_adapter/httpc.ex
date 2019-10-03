@@ -1,6 +1,5 @@
 defmodule ExRets.HttpAdapter.Httpc do
-  alias ExRets.HttpAdapter
-  alias ExRets.HttpAdapter.Response
+  alias ExRets.{HttpAdapter, HttpResponse}
 
   @behaviour HttpAdapter
 
@@ -55,7 +54,7 @@ defmodule ExRets.HttpAdapter.Httpc do
     headers = Enum.map(headers, fn {key, value} -> {to_string(key), to_string(value)} end)
     body = IO.iodata_to_binary(body)
 
-    {:ok, %Response{status: status, headers: headers, body: body}}
+    {:ok, %HttpResponse{status: status, headers: headers, body: body}}
   end
 
   defp format_response({:error, error}) do

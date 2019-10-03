@@ -1,8 +1,7 @@
 defmodule ExRets.Client do
   require Logger
 
-  alias ExRets.{Credentials, DigestAuthentication}
-  alias ExRets.HttpAdapter.{Request, Response}
+  alias ExRets.{Credentials, DigestAuthentication, HttpRequest, HttpResponse}
 
   @typep middleware ::
            (Request.t(), next :: middleware() -> {:ok, Response.t()} | {:error, any()})
@@ -45,16 +44,16 @@ defmodule ExRets.Client do
       {"accept", "*/*"}
     ]
 
-    fn %Request{headers: headers} = request, next ->
-      %Request{request | headers: headers ++ default_headers}
+    fn %HttpRequest{headers: headers} = request, next ->
+      %HttpRequest{request | headers: headers ++ default_headers}
       |> next.()
     end
   end
 
   defp http_auth_middleware(credentials) do
-    fn %Request{} = request, next ->
+    fn %HttpRequest{} = request, next ->
       case next.(request) do
-        {:ok, %Response{status: 401, headers: headers}} ->
+        {:ok, %HttpResponse{status: 401, headers: headers}} ->
           authorization =
             headers
             |> DigestAuthentication.parse_challenge()
@@ -65,7 +64,7 @@ defmodule ExRets.Client do
               request.uri
             )
 
-          request = %Request{
+          request = %HttpRequest{
             request
             | headers: [{"authorization", to_string(authorization)} | request.headers]
           }
@@ -78,7 +77,7 @@ defmodule ExRets.Client do
     end
   end
 
-  defp logger_middleware(%Request{} = request, next) do
+  defp logger_middleware(%HttpRequest{} = request, next) do
     request_id = generate_request_id()
     Logger.debug("Running request:\n#{inspect(request, pretty: true)}", request_id: request_id)
     result = next.(request)
