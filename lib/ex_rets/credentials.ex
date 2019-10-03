@@ -8,6 +8,7 @@ defmodule ExRets.Credentials do
           rets_version: String.t()
         }
 
+  @derive {Inspect, only: [:mls_id, :login_uri, :rets_version]}
   @enforce_keys [:mls_id, :login_uri, :username, :password]
   defstruct mls_id: nil,
             login_uri: nil,

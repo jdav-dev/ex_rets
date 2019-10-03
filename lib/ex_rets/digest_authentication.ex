@@ -55,8 +55,7 @@ defmodule ExRets.DigestAuthentication do
         |> Enum.join(", ")
       end
 
-      defp maybe_add_qop(response_list, %{qop: qop} = response)
-           when not is_nil(qop) and qop != "" do
+      defp maybe_add_qop(response_list, %{qop: qop} = response) do
         if response.qop && response.qop != "" do
           qop_fields = ~w(
             qop=#{qop}

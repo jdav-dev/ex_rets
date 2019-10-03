@@ -11,12 +11,10 @@ defmodule ExRets.RetsResponse do
   defstruct reply_code: 0, reply_text: nil, response: nil
 
   def from_xml(%ParsedXml{name: :RETS, attributes: attributes, elements: elements}) do
-    response = Enum.find(elements, %{elements: nil}, &(&1.name == :"RETS-RESPONSE"))
-
     %__MODULE__{
       reply_code: String.to_integer(attributes[:ReplyCode]),
       reply_text: attributes[:ReplyText],
-      response: response.elements
+      response: elements
     }
   end
 end

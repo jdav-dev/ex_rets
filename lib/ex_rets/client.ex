@@ -2,29 +2,42 @@ defmodule ExRets.Client do
   require Logger
 
   alias ExRets.{
+    CapabilityUris,
     Credentials,
     DigestAuthentication,
     HttpRequest,
     HttpResponse,
     LoginResponse,
-    RetsResponse
+    RetsResponse,
+    SearchArguments,
+    SearchResponse,
+    SessionInformation
   }
 
   @typep middleware ::
            (Request.t(), next :: middleware() -> {:ok, Response.t()} | {:error, any()})
 
   @opaque t :: %__MODULE__{
+            capability_uris: CapabilityUris.t() | nil,
             credentials: Credentials.t(),
             http_adapter: ExRets.HttpAdapter.t(),
             http_client: ExRets.HttpAdapter.client(),
-            middleware: [middleware()]
+            http_timeout: non_neg_integer() | :infinity,
+            middleware: [middleware()],
+            session_information: SessionInformation.t() | nil
           }
 
-  @enforce_keys [:http_client, :credentials, :http_adapter]
-  defstruct http_client: nil, credentials: nil, http_adapter: nil, middleware: []
+  defstruct capability_uris: nil,
+            credentials: nil,
+            http_client: nil,
+            http_adapter: nil,
+            http_timeout: nil,
+            middleware: [],
+            session_information: nil
 
   def new(%Credentials{} = credentials, opts \\ []) do
     http_adapter = Keyword.get(opts, :http_adapter, ExRets.HttpAdapter.Httpc)
+    http_timeout = Keyword.get(opts, :http_timeout, :timer.seconds(30))
     xml_parser = Keyword.get(opts, :xml_parser, ExRets.XmlParser.Xmerl)
 
     with {:ok, http_client} <- http_adapter.new_client(profile: credentials.mls_id) do
@@ -39,6 +52,7 @@ defmodule ExRets.Client do
         credentials: credentials,
         http_adapter: http_adapter,
         http_client: http_client,
+        http_timeout: http_timeout,
         middleware: middleware
       }
 
@@ -130,18 +144,30 @@ defmodule ExRets.Client do
     Base.url_encode64(binary)
   end
 
+  def close(%__MODULE__{http_client: http_client, http_adapter: http_adapter}) do
+    http_adapter.close_client(http_client)
+  end
+
   def login(%__MODULE__{} = rets_client) do
     login_uri = rets_client.credentials.login_uri
     request = %HttpRequest{uri: login_uri}
 
     with {:ok, %RetsResponse{} = rets_response} <- do_request(rets_client, request) do
-      {:ok, LoginResponse.from_rets_response(login_uri, rets_response)}
+      login_response = LoginResponse.from_rets_response(login_uri, rets_response)
+
+      logged_in_rets_client = %__MODULE__{
+        rets_client
+        | capability_uris: login_response.capability_uris,
+          session_information: login_response.session_information
+      }
+
+      {:ok, logged_in_rets_client}
     end
   end
 
-  defp do_request(%__MODULE__{} = rets_client, request) do
+  defp do_request(%__MODULE__{http_timeout: timeout} = rets_client, request) do
     call_http_adapter = fn request ->
-      rets_client.http_adapter.do_request(rets_client.http_client, request)
+      rets_client.http_adapter.do_request(rets_client.http_client, request, timeout: timeout)
     end
 
     run =
@@ -154,7 +180,17 @@ defmodule ExRets.Client do
     run.(request)
   end
 
-  def close(%__MODULE__{http_client: http_client, http_adapter: http_adapter}) do
-    http_adapter.close_client(http_client)
+  def search(
+        %__MODULE__{capability_uris: %CapabilityUris{search: %URI{} = search_uri}} = rets_client,
+        search_arguments
+      ) do
+    body = SearchArguments.encode_query(search_arguments)
+    request = %HttpRequest{method: :post, uri: search_uri, body: body}
+
+    with {:ok, %RetsResponse{} = rets_response} <- do_request(rets_client, request) do
+      {:ok, SearchResponse.from_rets_response(rets_response)}
+    end
   end
+
+  def search(_not_logged_in_rets_client, _search_arguments), do: {:error, :not_logged_in}
 end

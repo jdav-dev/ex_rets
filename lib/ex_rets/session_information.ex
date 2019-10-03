@@ -1,6 +1,4 @@
 defmodule ExRets.SessionInformation do
-  alias ExRets.RetsResponse
-
   @type t :: %__MODULE__{
           user_id: String.t() | nil,
           user_class: String.t() | nil,
@@ -53,10 +51,10 @@ defmodule ExRets.SessionInformation do
     :support_contact_information
   ]
 
-  def from_rets_response(%RetsResponse{response: response}) do
+  def from_rets_response(key_value_body) do
     params =
-      response
-      |> Enum.reduce(%{}, &parse_login_response/2)
+      key_value_body
+      |> parse_login_response()
       |> downcase_keys()
 
     %__MODULE__{
@@ -86,13 +84,13 @@ defmodule ExRets.SessionInformation do
     }
   end
 
-  defp parse_login_response(element, acc) when is_binary(element) do
+  defp parse_login_response(element) when is_binary(element) do
     element
     |> String.split("\n")
-    |> Enum.reduce(acc, &map_response_arguments/2)
+    |> Enum.reduce(%{}, &map_response_arguments/2)
   end
 
-  defp parse_login_response(_, acc), do: acc
+  defp parse_login_response(_), do: %{}
 
   defp map_response_arguments("Info=" <> info, acc) do
     case String.split(info, ";") do

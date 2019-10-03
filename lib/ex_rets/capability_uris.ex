@@ -1,6 +1,4 @@
 defmodule ExRets.CapabilityUris do
-  alias ExRets.RetsResponse
-
   @type t :: %__MODULE__{
           action: URI.t() | nil,
           change_password: URI.t() | nil,
@@ -29,8 +27,8 @@ defmodule ExRets.CapabilityUris do
     :get_payload_list
   ]
 
-  def from_rets_response(%URI{} = login_uri, %RetsResponse{response: response}) do
-    params = Enum.reduce(response, %{}, parse_login_response(login_uri))
+  def from_rets_response(key_value_body, %URI{} = login_uri) do
+    params = parse_login_response(key_value_body, login_uri)
 
     %__MODULE__{
       action: params["action"],
@@ -47,19 +45,13 @@ defmodule ExRets.CapabilityUris do
     }
   end
 
-  defp parse_login_response(login_uri) do
-    mapper = map_response_arguments(login_uri)
-
-    fn
-      element, acc when is_binary(element) ->
-        element
-        |> String.split("\n")
-        |> Enum.reduce(acc, mapper)
-
-      _, acc ->
-        acc
-    end
+  defp parse_login_response(element, login_uri) when is_binary(element) do
+    element
+    |> String.split("\n")
+    |> Enum.reduce(%{}, map_response_arguments(login_uri))
   end
+
+  defp parse_login_response(_, _), do: %{}
 
   defp map_response_arguments(login_uri) do
     fn argument, acc ->

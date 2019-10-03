@@ -1,5 +1,5 @@
 defmodule ExRets do
-  alias ExRets.{Client, Credentials}
+  alias ExRets.{Client, Credentials, SearchArguments}
 
   def new_client(%Credentials{} = credentials) do
     Client.new(credentials)
@@ -11,5 +11,9 @@ defmodule ExRets do
 
   def login(%Client{} = client) do
     Client.login(client)
+  end
+
+  def search(%Client{} = client, %SearchArguments{} = search_params) do
+    Client.search(client, search_params)
   end
 end

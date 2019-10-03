@@ -8,10 +8,19 @@ defmodule ExRets.LoginResponse do
 
   defstruct session_information: %SessionInformation{}, capability_uris: %CapabilityUris{}
 
-  def from_rets_response(login_uri, %RetsResponse{} = rets_response) do
+  def from_rets_response(login_uri, %RetsResponse{response: response}) do
+    key_value_body = get_key_value_body(response)
+
     %__MODULE__{
-      session_information: SessionInformation.from_rets_response(rets_response),
-      capability_uris: CapabilityUris.from_rets_response(login_uri, rets_response)
+      session_information: SessionInformation.from_rets_response(key_value_body),
+      capability_uris: CapabilityUris.from_rets_response(key_value_body, login_uri)
     }
+  end
+
+  defp get_key_value_body(response) do
+    response
+    |> Enum.find(%{}, &(&1.name == :"RETS-RESPONSE"))
+    |> Map.get(:elements, [])
+    |> List.first()
   end
 end
