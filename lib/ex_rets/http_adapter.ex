@@ -1,4 +1,6 @@
 defmodule ExRets.HttpAdapter do
+  @type t :: module()
+
   @type body :: binary() | nil
   @type client :: any()
   @type header :: {binary(), binary()}
