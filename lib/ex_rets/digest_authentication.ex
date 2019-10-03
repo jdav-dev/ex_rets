@@ -1,14 +1,14 @@
 defmodule ExRets.DigestAuthentication do
-  @type header :: {binary(), binary()}
+  @type header :: {String.t(), String.t()}
   @type headers :: [header()]
 
   defmodule Challenge do
     @type t :: %__MODULE__{
-            realm: binary() | nil,
-            nonce: binary() | nil,
-            algorithm: binary() | nil,
-            opaque: binary() | nil,
-            qop: binary() | nil,
+            realm: String.t() | nil,
+            nonce: String.t() | nil,
+            algorithm: String.t() | nil,
+            opaque: String.t() | nil,
+            qop: String.t() | nil,
             nonce_count: non_neg_integer()
           }
 
@@ -17,16 +17,16 @@ defmodule ExRets.DigestAuthentication do
 
   defmodule Response do
     @type t :: %__MODULE__{
-            username: binary() | nil,
-            realm: binary() | nil,
-            nonce: binary() | nil,
-            algorithm: binary() | nil,
-            opaque: binary() | nil,
-            qop: binary() | nil,
+            username: String.t() | nil,
+            realm: String.t() | nil,
+            nonce: String.t() | nil,
+            algorithm: String.t() | nil,
+            opaque: String.t() | nil,
+            qop: String.t() | nil,
             uri: URI.t() | nil,
-            nonce_count: binary(),
-            cnonce: binary() | nil,
-            response: binary() | nil
+            nonce_count: String.t(),
+            cnonce: String.t() | nil,
+            response: String.t() | nil
           }
 
     defstruct username: nil,

@@ -1,5 +1,5 @@
 defmodule ExRets do
-  alias ExRets.{Client, Credentials, HttpRequest, HttpResponse}
+  alias ExRets.{Client, Credentials}
 
   def new_client(%Credentials{} = credentials) do
     Client.new(credentials)
@@ -10,14 +10,6 @@ defmodule ExRets do
   end
 
   def login(%Client{} = client) do
-    request = %HttpRequest{uri: client.credentials.login_uri}
-
-    with {:ok, %HttpResponse{body: body}} <- Client.do_request(client, request) do
-      parse_capability(body)
-    end
-  end
-
-  defp parse_capability(body) do
-    body
+    Client.login(client)
   end
 end

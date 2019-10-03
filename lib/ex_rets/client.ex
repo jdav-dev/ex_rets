@@ -1,7 +1,14 @@
 defmodule ExRets.Client do
   require Logger
 
-  alias ExRets.{Credentials, DigestAuthentication, HttpRequest, HttpResponse}
+  alias ExRets.{
+    Credentials,
+    DigestAuthentication,
+    HttpRequest,
+    HttpResponse,
+    LoginResponse,
+    RetsResponse
+  }
 
   @typep middleware ::
            (Request.t(), next :: middleware() -> {:ok, Response.t()} | {:error, any()})
@@ -18,9 +25,11 @@ defmodule ExRets.Client do
 
   def new(%Credentials{} = credentials, opts \\ []) do
     http_adapter = Keyword.get(opts, :http_adapter, ExRets.HttpAdapter.Httpc)
+    xml_parser = Keyword.get(opts, :xml_parser, ExRets.XmlParser.Xmerl)
 
     with {:ok, http_client} <- http_adapter.new_client(profile: credentials.mls_id) do
       middleware = [
+        parse_rets_response_middleware(xml_parser),
         default_headers_middleware(credentials),
         http_auth_middleware(credentials),
         &logger_middleware/2
@@ -34,6 +43,24 @@ defmodule ExRets.Client do
       }
 
       {:ok, rets_client}
+    end
+  end
+
+  defp parse_rets_response_middleware(xml_parser) do
+    fn request, next ->
+      result = next.(request)
+
+      with {:ok, %HttpResponse{headers: headers, body: body}} <- result,
+           true <- {"content-type", "text/xml"} in headers do
+        rets_response =
+          body
+          |> xml_parser.parse()
+          |> RetsResponse.from_xml()
+
+        {:ok, rets_response}
+      else
+        _ -> result
+      end
     end
   end
 
@@ -79,15 +106,15 @@ defmodule ExRets.Client do
 
   defp logger_middleware(%HttpRequest{} = request, next) do
     request_id = generate_request_id()
-    Logger.debug("Running request:\n#{inspect(request, pretty: true)}", request_id: request_id)
+    Logger.debug("RETS request:\n#{inspect(request, pretty: true)}", request_id: request_id)
     result = next.(request)
 
     case result do
       {:ok, response} ->
-        Logger.debug("Response:\n#{inspect(response, pretty: true)}", request_id: request_id)
+        Logger.debug("RETS response:\n#{inspect(response, pretty: true)}", request_id: request_id)
 
       error ->
-        Logger.error("Request failed:\n#{inspect(error, pretty: true)}")
+        Logger.error("RETS request failed:\n#{inspect(error, pretty: true)}")
     end
 
     result
@@ -103,7 +130,16 @@ defmodule ExRets.Client do
     Base.url_encode64(binary)
   end
 
-  def do_request(%__MODULE__{} = rets_client, request) do
+  def login(%__MODULE__{} = rets_client) do
+    login_uri = rets_client.credentials.login_uri
+    request = %HttpRequest{uri: login_uri}
+
+    with {:ok, %RetsResponse{} = rets_response} <- do_request(rets_client, request) do
+      {:ok, LoginResponse.from_rets_response(login_uri, rets_response)}
+    end
+  end
+
+  defp do_request(%__MODULE__{} = rets_client, request) do
     call_http_adapter = fn request ->
       rets_client.http_adapter.do_request(rets_client.http_client, request)
     end

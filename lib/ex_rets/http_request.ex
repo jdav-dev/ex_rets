@@ -3,7 +3,7 @@ defmodule ExRets.HttpRequest do
           method: :get | :post,
           uri: URI.t(),
           headers: ExRets.HttpAdapter.headers(),
-          body: binary()
+          body: String.t()
         }
 
   @enforce_keys [:uri]

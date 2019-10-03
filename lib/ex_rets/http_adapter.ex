@@ -3,10 +3,10 @@ defmodule ExRets.HttpAdapter do
 
   @type t :: module()
 
-  @type body :: binary() | nil
+  @type body :: String.t() | nil
   @type client :: any()
-  @type header :: {binary(), binary()}
-  @type headers :: [{binary(), binary()}]
+  @type header :: {String.t(), String.t()}
+  @type headers :: [{String.t(), String.t()}]
   @type opts :: Keyword.t()
 
   @callback new_client(opts()) :: {:ok, client()} | {:error, any()}
