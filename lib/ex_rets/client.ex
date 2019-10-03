@@ -95,22 +95,26 @@ defmodule ExRets.Client do
     fn %HttpRequest{} = request, next ->
       case next.(request) do
         {:ok, %HttpResponse{status: 401, headers: headers}} ->
-          authorization =
-            headers
-            |> DigestAuthentication.parse_challenge()
-            |> DigestAuthentication.answer_challenge(
-              credentials.username,
-              credentials.password,
-              request.method,
-              request.uri
-            )
+          if Enum.any?(headers, fn {header, _value} -> header == "www-authenticate" end) do
+            authorization =
+              headers
+              |> DigestAuthentication.parse_challenge()
+              |> DigestAuthentication.answer_challenge(
+                credentials.username,
+                credentials.password,
+                request.method,
+                request.uri
+              )
 
-          request = %HttpRequest{
-            request
-            | headers: [{"authorization", to_string(authorization)} | request.headers]
-          }
+            request = %HttpRequest{
+              request
+              | headers: [{"authorization", to_string(authorization)} | request.headers]
+            }
 
-          http_auth_middleware(credentials).(request, next)
+            http_auth_middleware(credentials).(request, next)
+          else
+            {:error, :not_logged_in}
+          end
 
         result ->
           result
