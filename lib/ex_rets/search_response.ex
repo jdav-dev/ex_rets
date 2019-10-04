@@ -45,10 +45,16 @@ defmodule ExRets.SearchResponse do
   defp get_columns(response, delimiter) do
     response
     |> Enum.find(%{}, &(&1.name == :COLUMNS))
-    |> Map.get(:elements, %{})
+    |> Map.get(:elements, [])
     |> List.first()
-    |> String.split(delimiter)
+    |> maybe_split_string(delimiter)
   end
+
+  defp maybe_split_string(string, delimiter) when is_binary(string) do
+    String.split(string, delimiter)
+  end
+
+  defp maybe_split_string(_string, _delimiter), do: []
 
   defp get_datas(response, delimiter) do
     response
