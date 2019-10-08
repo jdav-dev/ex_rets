@@ -27,7 +27,7 @@ defmodule ExRets.CapabilityUris do
     :get_payload_list
   ]
 
-  def from_rets_response(key_value_body, %URI{} = login_uri) do
+  def parse(key_value_body, %URI{} = login_uri) do
     params = parse_login_response(key_value_body, login_uri)
 
     %__MODULE__{

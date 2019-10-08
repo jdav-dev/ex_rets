@@ -51,7 +51,7 @@ defmodule ExRets.SessionInformation do
     :support_contact_information
   ]
 
-  def from_rets_response(key_value_body) do
+  def parse(key_value_body) do
     params =
       key_value_body
       |> parse_login_response()

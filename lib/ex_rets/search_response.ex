@@ -1,5 +1,6 @@
 defmodule ExRets.SearchResponse do
   alias ExRets.RetsResponse
+  alias ExRets.CompactFormat
 
   @type t :: %__MODULE__{
           count: non_neg_integer(),
@@ -9,58 +10,90 @@ defmodule ExRets.SearchResponse do
 
   defstruct count: nil, columns: [], rows: []
 
-  def from_rets_response(%RetsResponse{response: response}) do
-    count = get_count(response)
-    delimiter = get_delimiter(response)
-    columns = get_columns(response, delimiter)
-    rows = get_datas(response, delimiter)
+  def parse(xml) do
+    xml = to_charlist(xml)
 
-    %__MODULE__{count: count, columns: columns, rows: rows}
-  end
+    initial_event_state = %{
+      rets_response: %RetsResponse{response: %__MODULE__{}},
+      delimiter: "\t",
+      characters: []
+    }
 
-  defp get_count(response) do
-    count_string =
-      response
-      |> Enum.find(%{}, &(&1.name == :COUNT))
-      |> Map.get(:attributes, %{})
-      |> Map.get(:Records, "")
+    xmerl_opts = [event_fun: &xmerl_event_fun/3, event_state: initial_event_state]
 
-    case Integer.parse(count_string) do
-      {count, _} -> count
-      _ -> nil
+    with {:ok, %{rets_response: rets_response}, _} <- :xmerl_sax_parser.stream(xml, xmerl_opts) do
+      {:ok, rets_response}
     end
   end
 
-  defp get_delimiter(response) do
-    delimiter_octet =
-      response
-      |> Enum.find(%{}, &(&1.name == :DELIMITER))
-      |> Map.get(:attributes, %{})
-      |> Map.get(:value, "08")
-      |> String.to_integer()
+  defp xmerl_event_fun({:startElement, _, 'RETS', _, attributes}, _, state) do
+    Enum.reduce(attributes, state, fn
+      {_, _, 'ReplyCode', value}, acc ->
+        reply_code = value |> to_string() |> String.to_integer()
+        put_in(acc.rets_response.reply_code, reply_code)
 
-    <<delimiter_octet>>
+      {_, _, 'ReplyText', value}, acc ->
+        reply_text = to_string(value)
+        put_in(acc.rets_response.reply_text, reply_text)
+
+      _, acc ->
+        acc
+    end)
   end
 
-  defp get_columns(response, delimiter) do
-    response
-    |> Enum.find(%{}, &(&1.name == :COLUMNS))
-    |> Map.get(:elements, [])
-    |> List.first()
-    |> maybe_split_string(delimiter)
+  defp xmerl_event_fun({:startElement, _, 'COUNT', _, attributes}, _, state) do
+    Enum.reduce(attributes, state, fn
+      {_, _, 'Records', value}, acc ->
+        count = value |> to_string() |> String.to_integer()
+        put_in(acc.rets_response.response.count, count)
+
+      _, acc ->
+        acc
+    end)
   end
 
-  defp maybe_split_string(string, delimiter) when is_binary(string) and is_binary(delimiter) do
-    String.split(string, delimiter)
+  defp xmerl_event_fun({:startElement, _, 'DELIMITER', _, attributes}, _, state) do
+    Enum.reduce(attributes, state, fn
+      {_, _, 'value', value}, acc ->
+        value = to_string(value)
+
+        case CompactFormat.Delimiter.decode(value) do
+          {:ok, delimiter} -> put_in(acc.delimiter, delimiter)
+          :error -> acc
+        end
+
+      _, acc ->
+        acc
+    end)
   end
 
-  defp maybe_split_string(_string, _delimiter), do: []
-
-  defp get_datas(response, delimiter) do
-    response
-    |> Stream.filter(&(&1.name == :DATA))
-    |> Stream.map(&Map.get(&1, :elements))
-    |> Stream.map(&List.first/1)
-    |> Enum.map(&String.split(&1, delimiter))
+  defp xmerl_event_fun({:startElement, _, _name, _, _attributes}, _, state) do
+    put_in(state.characters, [])
   end
+
+  defp xmerl_event_fun({:characters, characters}, _, state) do
+    put_in(state.characters, [characters | state.characters])
+  end
+
+  defp xmerl_event_fun({:endElement, _, 'COLUMNS', _}, _, state) do
+    columns =
+      state.characters
+      |> Enum.reverse()
+      |> Enum.join("")
+      |> CompactFormat.Data.parse()
+
+    put_in(state.rets_response.response.columns, columns)
+  end
+
+  defp xmerl_event_fun({:endElement, _, 'DATA', _}, _, state) do
+    row =
+      state.characters
+      |> Enum.reverse()
+      |> Enum.join("")
+      |> CompactFormat.Data.parse()
+
+    put_in(state.rets_response.response.rows, [row | state.rets_response.response.rows])
+  end
+
+  defp xmerl_event_fun(_event, _, state), do: state
 end
