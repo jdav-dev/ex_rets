@@ -38,9 +38,7 @@ defmodule ExRets.XmlParser.Xmerl do
   end
 
   defp walk_xml(xmlText(value: value)) do
-    value
-    |> to_string()
-    |> String.trim()
+    to_string(value)
   end
 
   defp walk_xml(other_record) do

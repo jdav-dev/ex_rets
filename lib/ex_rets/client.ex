@@ -37,7 +37,7 @@ defmodule ExRets.Client do
 
   def new(%Credentials{} = credentials, opts \\ []) do
     http_adapter = Keyword.get(opts, :http_adapter, ExRets.HttpAdapter.Httpc)
-    http_timeout = Keyword.get(opts, :http_timeout, :timer.seconds(30))
+    http_timeout = Keyword.get(opts, :http_timeout, :timer.minutes(10))
     xml_parser = Keyword.get(opts, :xml_parser, ExRets.XmlParser.Xmerl)
 
     with {:ok, http_client} <- http_adapter.new_client(profile: credentials.mls_id) do
@@ -106,10 +106,12 @@ defmodule ExRets.Client do
                 request.uri
               )
 
-            request = %HttpRequest{
-              request
-              | headers: [{"authorization", to_string(authorization)} | request.headers]
-            }
+            updated_headers =
+              Enum.reject(request.headers, fn {header, _value} -> header == "authorization" end)
+
+            updated_headers = [{"authorization", to_string(authorization)} | updated_headers]
+
+            request = %HttpRequest{request | headers: updated_headers}
 
             http_auth_middleware(credentials).(request, next)
           else

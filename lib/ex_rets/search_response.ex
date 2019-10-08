@@ -50,7 +50,7 @@ defmodule ExRets.SearchResponse do
     |> maybe_split_string(delimiter)
   end
 
-  defp maybe_split_string(string, delimiter) when is_binary(string) do
+  defp maybe_split_string(string, delimiter) when is_binary(string) and is_binary(delimiter) do
     String.split(string, delimiter)
   end
 
