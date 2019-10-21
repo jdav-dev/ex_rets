@@ -8,12 +8,19 @@ defmodule ExRets.HttpAdapter.Httpc do
   @impl HttpAdapter
   def new_client(opts) do
     with {:ok, profile_name} <- Keyword.fetch(opts, :profile),
-         {:ok, profile} <- :inets.start(:httpc, profile: profile_name),
+         {:ok, profile} <- start_httpc(profile_name),
          :ok <- :httpc.set_options([cookies: :enabled], profile) do
       {:ok, profile}
     else
       :error -> {:error, ":profile option is required"}
       error -> error
+    end
+  end
+
+  defp start_httpc(profile_name) do
+    case :inets.start(:httpc, profile: profile_name) do
+      {:error, {:already_started, profile}} -> {:ok, profile}
+      result -> result
     end
   end
 
