@@ -35,10 +35,11 @@ defmodule ExRets.Client do
     http_adapter = Keyword.get(opts, :http_adapter, ExRets.HttpAdapter.Httpc)
     http_timeout = Keyword.get(opts, :http_timeout, :timer.minutes(10))
 
-    with {:ok, http_client} <- http_adapter.new_client(profile: credentials.mls_id) do
+    with {:ok, http_client} <- http_adapter.new_client(profile: credentials.system_id) do
       middleware = [
-        default_headers_middleware(credentials),
-        http_auth_middleware(credentials),
+        default_headers_middleware_fun(credentials),
+        login_middleware_fun(credentials),
+        auth_headers_middleware_fun(credentials),
         &logger_middleware/2
       ]
 
@@ -54,7 +55,7 @@ defmodule ExRets.Client do
     end
   end
 
-  defp default_headers_middleware(credentials) do
+  defp default_headers_middleware_fun(credentials) do
     default_headers = [
       {"user-agent", credentials.user_agent},
       {"rets-version", credentials.rets_version},
@@ -67,7 +68,25 @@ defmodule ExRets.Client do
     end
   end
 
-  defp http_auth_middleware(credentials) do
+  defp login_middleware_fun(credentials) do
+    fn %HttpRequest{} = request, next ->
+      case next.(request) do
+        {:error, :not_logged_in} ->
+          login_uri = credentials.login_uri
+          login_request = %HttpRequest{uri: login_uri}
+
+          case next.(login_request) do
+            {:ok, _} -> next.(request)
+            result -> result
+          end
+
+        result ->
+          result
+      end
+    end
+  end
+
+  defp auth_headers_middleware_fun(credentials) do
     fn %HttpRequest{} = request, next ->
       case next.(request) do
         {:ok, %HttpResponse{status: 401, headers: headers}} ->
@@ -89,7 +108,7 @@ defmodule ExRets.Client do
 
             request = %HttpRequest{request | headers: updated_headers}
 
-            http_auth_middleware(credentials).(request, next)
+            next.(request)
           else
             {:error, :not_logged_in}
           end
@@ -131,6 +150,13 @@ defmodule ExRets.Client do
   end
 
   def login(%__MODULE__{} = rets_client) do
+    rets_client
+    |> login_fun()
+    |> Task.async()
+    |> Task.await(:infinity)
+  end
+
+  defp login_fun(%__MODULE__{} = rets_client) do
     fn ->
       login_uri = rets_client.credentials.login_uri
       request = %HttpRequest{uri: login_uri}
@@ -145,8 +171,6 @@ defmodule ExRets.Client do
         {:ok, logged_in_rets_client}
       end
     end
-    |> Task.async()
-    |> Task.await()
   end
 
   defp do_request(%__MODULE__{http_timeout: timeout} = rets_client, request) do
@@ -167,11 +191,22 @@ defmodule ExRets.Client do
   def search(
         %__MODULE__{
           login_response: %LoginResponse{
-            capability_uris: %CapabilityUris{search: %URI{} = search_uri}
+            capability_uris: %CapabilityUris{search: %URI{}}
           }
         } = rets_client,
         search_arguments
       ) do
+    rets_client
+    |> search_fun(search_arguments)
+    |> Task.async()
+    |> Task.await(:infinity)
+  end
+
+  def search(_not_logged_in_rets_client, _search_arguments), do: {:error, :not_logged_in}
+
+  defp search_fun(%__MODULE__{} = rets_client, search_arguments) do
+    search_uri = rets_client.login_response.capability_uris.search
+
     fn ->
       body = SearchArguments.encode_query(search_arguments)
       request = %HttpRequest{method: :post, uri: search_uri, body: body}
@@ -180,9 +215,5 @@ defmodule ExRets.Client do
         SearchResponse.parse(body)
       end
     end
-    |> Task.async()
-    |> Task.await()
   end
-
-  def search(_not_logged_in_rets_client, _search_arguments), do: {:error, :not_logged_in}
 end
