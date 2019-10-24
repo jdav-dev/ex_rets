@@ -131,14 +131,22 @@ defmodule ExRets.Client do
   end
 
   def login(%__MODULE__{} = rets_client) do
-    login_uri = rets_client.credentials.login_uri
-    request = %HttpRequest{uri: login_uri}
+    fn ->
+      login_uri = rets_client.credentials.login_uri
+      request = %HttpRequest{uri: login_uri}
 
-    with {:ok, %HttpResponse{body: body}} <- do_request(rets_client, request),
-         {:ok, rets_response} <- LoginResponse.parse(body, login_uri) do
-      logged_in_rets_client = %__MODULE__{rets_client | login_response: rets_response.response}
-      {:ok, logged_in_rets_client}
+      with {:ok, %HttpResponse{body: body}} <- do_request(rets_client, request),
+           {:ok, rets_response} <- LoginResponse.parse(body, login_uri) do
+        logged_in_rets_client = %__MODULE__{
+          rets_client
+          | login_response: rets_response.response
+        }
+
+        {:ok, logged_in_rets_client}
+      end
     end
+    |> Task.async()
+    |> Task.await()
   end
 
   defp do_request(%__MODULE__{http_timeout: timeout} = rets_client, request) do
@@ -164,12 +172,16 @@ defmodule ExRets.Client do
         } = rets_client,
         search_arguments
       ) do
-    body = SearchArguments.encode_query(search_arguments)
-    request = %HttpRequest{method: :post, uri: search_uri, body: body}
+    fn ->
+      body = SearchArguments.encode_query(search_arguments)
+      request = %HttpRequest{method: :post, uri: search_uri, body: body}
 
-    with {:ok, %HttpResponse{body: body}} <- do_request(rets_client, request) do
-      SearchResponse.parse(body)
+      with {:ok, %HttpResponse{body: body}} <- do_request(rets_client, request) do
+        SearchResponse.parse(body)
+      end
     end
+    |> Task.async()
+    |> Task.await()
   end
 
   def search(_not_logged_in_rets_client, _search_arguments), do: {:error, :not_logged_in}
