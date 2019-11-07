@@ -87,14 +87,7 @@ defmodule ExRets.HttpClient do
     cond do
       !:queue.is_empty(reply_queue) ->
         {{:value, queued_reply}, reply_queue} = :queue.out(reply_queue)
-
-        case queued_reply do
-          {:error, _} ->
-            {:stop, :normal, queued_reply, %{state | reply_queue: reply_queue}}
-
-          queued_reply ->
-            {:reply, queued_reply, %{state | reply_queue: reply_queue}, :hibernate}
-        end
+        {:reply, queued_reply, %{state | reply_queue: reply_queue}, :hibernate}
 
       stream_ended ->
         {:reply, {:ok, ""}, state}
