@@ -87,7 +87,14 @@ defmodule ExRets.HttpClient do
     cond do
       !:queue.is_empty(reply_queue) ->
         {{:value, queued_reply}, reply_queue} = :queue.out(reply_queue)
-        {:reply, queued_reply, %{state | reply_queue: reply_queue}, :hibernate}
+
+        case queued_reply do
+          {:error, _} ->
+            {:stop, :normal, queued_reply, %{state | reply_queue: reply_queue}}
+
+          queued_reply ->
+            {:reply, queued_reply, %{state | reply_queue: reply_queue}, :hibernate}
+        end
 
       stream_ended ->
         {:reply, {:ok, ""}, state}
@@ -104,12 +111,9 @@ defmodule ExRets.HttpClient do
   end
 
   @impl GenServer
-  def handle_info(
-        {:http, {request_id, {:error, reason}}},
-        %{from: from, request_id: request_id} = state
-      ) do
-    GenServer.reply(from, {:error, reason})
-    {:stop, :normal, state}
+  def handle_info({:http, {request_id, {:error, reason}}}, %{request_id: request_id} = state) do
+    state = send_or_queue_reply({:error, reason}, state)
+    {:noreply, state}
   end
 
   def handle_info({:http, {request_id, result}}, %{from: from, request_id: request_id} = state) do
