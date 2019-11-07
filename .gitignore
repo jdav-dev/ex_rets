@@ -22,3 +22,5 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 ex_rets-*.tar
 
+# Ignore .iex.exs because I tend to put sensitive information in here during development.
+.iex.exs

@@ -1,12 +1,12 @@
 defmodule ExRets do
   alias ExRets.{Client, Credentials, SearchArguments}
 
-  def new_client(%Credentials{} = credentials) do
-    Client.new(credentials)
+  def start_client(%Credentials{} = credentials, opts) do
+    Client.start_client(credentials, opts)
   end
 
-  def close_client(%Client{} = client) do
-    Client.close(client)
+  def stop_client(%Client{} = client) do
+    Client.stop_client(client)
   end
 
   def login(%Client{} = client) do
