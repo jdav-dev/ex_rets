@@ -11,7 +11,7 @@ defmodule ExRets.SearchResponse do
 
   defstruct count: nil, columns: [], rows: []
 
-  def parse(streamer) do
+  def parse(stream) do
     event_state = %{
       characters: [],
       delimiter: "\t",
@@ -20,20 +20,24 @@ defmodule ExRets.SearchResponse do
 
     opts = [
       continuation_fun: &continuation_fun/1,
-      continuation_state: streamer,
+      continuation_state: stream,
       event_fun: &event_fun/3,
       event_state: event_state
     ]
 
-    with {:ok, xml} <- HttpClient.stream_next(streamer),
-         {:ok, %{rets_response: rets_response}, _} <- :xmerl_sax_parser.stream(xml, opts) do
-      {:ok, rets_response}
-    end
+    result =
+      with {:ok, xml} <- HttpClient.stream_next(stream),
+           {:ok, %{rets_response: rets_response}, _} <- :xmerl_sax_parser.stream(xml, opts) do
+        {:ok, rets_response}
+      end
+
+    HttpClient.close_stream(stream)
+    result
   end
 
-  defp continuation_fun(streamer) do
-    case HttpClient.stream_next(streamer) do
-      {:ok, xml} -> {xml, streamer}
+  defp continuation_fun(stream) do
+    case HttpClient.stream_next(stream) do
+      {:ok, xml} -> {xml, stream}
       {:error, reason} -> throw({:error, reason})
     end
   end

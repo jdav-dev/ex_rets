@@ -25,10 +25,14 @@ defmodule ExRets.LoginResponse do
       event_state: event_state
     ]
 
-    with {:ok, xml} <- HttpClient.stream_next(stream),
-         {:ok, %{rets_response: rets_response}, _} <- :xmerl_sax_parser.stream(xml, opts) do
-      {:ok, rets_response}
-    end
+    result =
+      with {:ok, xml} <- HttpClient.stream_next(stream),
+           {:ok, %{rets_response: rets_response}, _} <- :xmerl_sax_parser.stream(xml, opts) do
+        {:ok, rets_response}
+      end
+
+    HttpClient.close_stream(stream)
+    result
   end
 
   defp continuation_fun(stream) do
