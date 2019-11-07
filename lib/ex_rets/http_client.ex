@@ -30,17 +30,18 @@ defmodule ExRets.HttpClient do
   def open_stream(client, request, http_opts \\ []) do
     with {:ok, stream} <-
            GenServer.start_link(__MODULE__, {client, request, http_opts}),
-         {:ok, %HttpResponse{status: 200} = response} <- GenServer.call(stream, :start_stream) do
+         {:ok, %HttpResponse{status: 200} = response} <-
+           GenServer.call(stream, :start_stream, :infinity) do
       {:ok, response, stream}
     end
   end
 
   def stream_next(stream) when is_pid(stream) do
-    GenServer.call(stream, :next)
+    GenServer.call(stream, :next, :infinity)
   end
 
   def close_stream(stream) when is_pid(stream) do
-    GenServer.call(stream, :cancel_stream)
+    GenServer.call(stream, :cancel_stream, :infinity)
   end
 
   def stop_client(client) when is_pid(client) do
