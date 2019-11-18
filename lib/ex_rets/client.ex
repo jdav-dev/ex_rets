@@ -3,7 +3,7 @@ defmodule ExRets.Client do
 
   alias ExRets.CapabilityUris
   alias ExRets.Credentials
-  alias ExRets.DigestAuthentication
+  alias ExRets.HttpAuthentication
   alias ExRets.HttpClient
   alias ExRets.HttpRequest
   alias ExRets.HttpResponse
@@ -23,6 +23,9 @@ defmodule ExRets.Client do
           }
 
   defstruct [:credentials, :http_client, :http_timeout, :login_response, :middleware]
+
+  @ex_rets_version Mix.Project.config() |> Keyword.fetch!(:version)
+  @default_user_agent "ExRets/#{@ex_rets_version}"
 
   def start_client(%Credentials{} = credentials, opts \\ []) do
     http_timeout = Keyword.get(opts, :timeout, :timer.minutes(15))
@@ -48,7 +51,7 @@ defmodule ExRets.Client do
 
   defp default_headers_middleware_fun(credentials) do
     default_headers = [
-      {"user-agent", credentials.user_agent},
+      {"user-agent", credentials.user_agent || @default_user_agent},
       {"rets-version", credentials.rets_version},
       {"accept", "*/*"}
     ]
@@ -79,33 +82,13 @@ defmodule ExRets.Client do
 
   defp auth_headers_middleware_fun(credentials) do
     fn %HttpRequest{} = request, next ->
-      case next.(request) do
-        {:ok, %HttpResponse{status: 401, headers: headers}} ->
-          if Enum.any?(headers, fn {header, _value} -> header == "www-authenticate" end) do
-            authorization =
-              headers
-              |> DigestAuthentication.parse_challenge()
-              |> DigestAuthentication.answer_challenge(
-                credentials.username,
-                credentials.password,
-                request.method,
-                request.uri
-              )
-
-            updated_headers =
-              Enum.reject(request.headers, fn {header, _value} -> header == "authorization" end)
-
-            updated_headers = [{"authorization", to_string(authorization)} | updated_headers]
-
-            request = %HttpRequest{request | headers: updated_headers}
-
-            next.(request)
-          else
-            {:error, :not_logged_in}
-          end
-
-        result ->
-          result
+      with {:ok, %HttpResponse{status: 401} = response} <- next.(request),
+           {:ok, updated_request} <-
+             HttpAuthentication.answer_challenge(request, response, credentials) do
+        next.(updated_request)
+      else
+        false -> {:error, :not_logged_in}
+        result -> result
       end
     end
   end

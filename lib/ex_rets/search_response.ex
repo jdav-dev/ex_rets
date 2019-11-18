@@ -1,5 +1,6 @@
 defmodule ExRets.SearchResponse do
-  alias ExRets.CompactFormat
+  alias ExRets.CompactDelimiter
+  alias ExRets.CompactRecord
   alias ExRets.HttpClient
   alias ExRets.RetsResponse
 
@@ -73,7 +74,7 @@ defmodule ExRets.SearchResponse do
       {_, _, 'value', value}, acc ->
         value = to_string(value)
 
-        case CompactFormat.Delimiter.decode(value) do
+        case CompactDelimiter.decode(value) do
           {:ok, delimiter} -> put_in(acc.delimiter, delimiter)
           :error -> acc
         end
@@ -96,7 +97,7 @@ defmodule ExRets.SearchResponse do
       state.characters
       |> Enum.reverse()
       |> Enum.join("")
-      |> CompactFormat.Data.parse()
+      |> CompactRecord.decode()
 
     put_in(state.rets_response.response.columns, columns)
   end
@@ -106,7 +107,7 @@ defmodule ExRets.SearchResponse do
       state.characters
       |> Enum.reverse()
       |> Enum.join("")
-      |> CompactFormat.Data.parse()
+      |> CompactRecord.decode()
 
     put_in(state.rets_response.response.rows, [row | state.rets_response.response.rows])
   end

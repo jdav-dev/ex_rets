@@ -5,7 +5,7 @@ defmodule ExRets.HttpResponse do
           body: String.t()
         }
 
-  @enforce_keys [:status, :headers, :body]
+  @enforce_keys [:status, :headers]
   defstruct status: 200, headers: [], body: ""
 
   def from_httpc({{_, status, _}, headers, body}) do
