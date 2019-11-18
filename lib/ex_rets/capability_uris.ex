@@ -1,17 +1,10 @@
 defmodule ExRets.CapabilityUris do
-  @type t :: %__MODULE__{
-          action: URI.t() | nil,
-          change_password: URI.t() | nil,
-          get_object: URI.t() | nil,
-          login: URI.t() | nil,
-          login_complete: URI.t() | nil,
-          logout: URI.t() | nil,
-          search: URI.t() | nil,
-          get_metadata: URI.t() | nil,
-          update: URI.t() | nil,
-          post_object: URI.t() | nil,
-          get_payload_list: URI.t() | nil
-        }
+  @moduledoc """
+  URIs for issuing RETS requests.
+  """
+  @moduledoc since: "0.1.0"
+
+  alias ExRets.LoginResponse
 
   defstruct [
     :action,
@@ -27,7 +20,64 @@ defmodule ExRets.CapabilityUris do
     :get_payload_list
   ]
 
-  def parse(key_value_body, %URI{} = login_uri) do
+  @typedoc "URIs used to issue RETS requests."
+  @typedoc since: "0.1.0"
+  @type t :: %__MODULE__{
+          action: URI.t() | nil,
+          change_password: URI.t() | nil,
+          get_object: URI.t() | nil,
+          login: URI.t() | nil,
+          login_complete: URI.t() | nil,
+          logout: URI.t() | nil,
+          search: URI.t() | nil,
+          get_metadata: URI.t() | nil,
+          update: URI.t() | nil,
+          post_object: URI.t() | nil,
+          get_payload_list: URI.t() | nil
+        }
+
+  @doc """
+  Parses a capability URL list returned as part of a login response.
+
+  Uses host information from the login URI if a returned capability URL does not include host
+  information.
+
+  ## Examples
+
+      iex> login_uri = URI.parse("https://example.com/login")
+      iex> ExRets.CapabilityUris.parse("Login = /login\\nSearch = /search", login_uri)
+      %ExRets.CapabilityUris{
+        login: %URI{
+          authority: "example.com",
+          host: "example.com",
+          path: "/login",
+          port: 443,
+          scheme: "https"
+        },
+        search: %URI{
+          authority: "example.com",
+          host: "example.com",
+          path: "/search",
+          port: 443,
+          scheme: "https"
+        }
+      }
+
+      iex> login_uri = URI.parse("https://example.com/login")
+      iex> ExRets.CapabilityUris.parse("Search = http://different.example.com/search", login_uri)
+      %ExRets.CapabilityUris{
+        search: %URI{
+          authority: "different.example.com",
+          host: "different.example.com",
+          path: "/search",
+          port: 80,
+          scheme: "http"
+        }
+      }
+  """
+  @doc since: "0.1.0"
+  @spec parse(LoginResponse.key_value_body(), URI.t()) :: t()
+  def parse(key_value_body, %URI{} = login_uri) when is_binary(key_value_body) do
     params = parse_login_response(key_value_body, login_uri)
 
     %__MODULE__{
@@ -45,25 +95,38 @@ defmodule ExRets.CapabilityUris do
     }
   end
 
-  defp parse_login_response(element, login_uri) when is_binary(element) do
-    element
+  defp parse_login_response(key_value_body, login_uri) do
+    key_value_body
     |> String.split("\n")
     |> Enum.reduce(%{}, map_response_arguments(login_uri))
   end
-
-  defp parse_login_response(_, _), do: %{}
 
   defp map_response_arguments(login_uri) do
     fn argument, acc ->
       case String.split(argument, "=") do
         [key, value] ->
-          lowercase_key = String.downcase(key)
-          uri_value = %URI{login_uri | path: value}
-          Map.put(acc, lowercase_key, uri_value)
+          normalized_key = trim_and_downcase_string(key)
+          uri_value = parse_uri(value, login_uri)
+          Map.put(acc, normalized_key, uri_value)
 
         _ ->
           acc
       end
+    end
+  end
+
+  defp trim_and_downcase_string(string) do
+    string
+    |> String.trim()
+    |> String.downcase()
+  end
+
+  defp parse_uri(value, login_uri) do
+    uri_value = value |> String.trim() |> URI.parse()
+
+    case uri_value.host do
+      nil -> %URI{login_uri | path: uri_value.path}
+      _ -> uri_value
     end
   end
 end

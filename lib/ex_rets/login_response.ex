@@ -1,16 +1,31 @@
 defmodule ExRets.LoginResponse do
+  @moduledoc """
+  Information necessary for a client to issue other requests.
+
+  Includes URIs that may be used for other RETS requests, and may also contain identity and
+  parameter information if required by the functions supported by the server.
+  """
+  @moduledoc since: "0.1.0"
+
   alias ExRets.CapabilityUris
   alias ExRets.HttpClient
   alias ExRets.RetsResponse
   alias ExRets.SessionInformation
 
+  defstruct session_information: %SessionInformation{}, capability_uris: %CapabilityUris{}
+
+  @typedoc "Information necessary for a client to issue other requests."
+  @typedoc since: "0.1.0"
   @type t :: %__MODULE__{
           session_information: SessionInformation.t(),
           capability_uris: CapabilityUris.t()
         }
 
-  defstruct session_information: %SessionInformation{}, capability_uris: %CapabilityUris{}
+  @typedoc "Key-value format used in the login response body."
+  @typedoc since: "0.1.0"
+  @type key_value_body :: String.t()
 
+  @doc false
   def parse(stream, login_uri) do
     event_state = %{
       characters: [],

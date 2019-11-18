@@ -1,4 +1,4 @@
 defmodule ExRetsTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest ExRets
 end

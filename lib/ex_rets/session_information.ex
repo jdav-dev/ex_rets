@@ -1,29 +1,10 @@
 defmodule ExRets.SessionInformation do
-  @type t :: %__MODULE__{
-          user_id: String.t() | nil,
-          user_class: String.t() | nil,
-          user_level: integer() | nil,
-          agent_code: String.t() | nil,
-          broker_code: String.t() | nil,
-          broker_branch: String.t() | nil,
-          member_name: String.t() | nil,
-          metadata_version: String.t() | nil,
-          metadata_timestamp: NaiveDateTime.t() | nil,
-          min_metadata_timestamp: NaiveDateTime.t() | nil,
-          metadata_id: String.t() | nil,
-          balance: String.t() | nil,
-          timeout_seconds: integer() | nil,
-          password_expiration: NaiveDateTime.t() | nil,
-          warn_password_expiration_days: integer() | nil,
-          office_list: String.t() | nil,
-          standard_names_version: String.t() | nil,
-          vendor_name: String.t() | nil,
-          server_product_name: String.t() | nil,
-          server_product_version: String.t() | nil,
-          operator_name: String.t() | nil,
-          role_name: String.t() | nil,
-          support_contact_information: String.t() | nil
-        }
+  @moduledoc """
+  Identity and parameter information.
+  """
+  @moduledoc since: "0.1.0"
+
+  alias ExRets.LoginResponse
 
   defstruct [
     :user_id,
@@ -51,11 +32,58 @@ defmodule ExRets.SessionInformation do
     :support_contact_information
   ]
 
-  def parse(key_value_body) do
+  @typedoc "Identity and parameter information."
+  @typedoc since: "0.1.0"
+  @type t :: %__MODULE__{
+          user_id: String.t() | nil,
+          user_class: String.t() | nil,
+          user_level: integer() | nil,
+          agent_code: String.t() | nil,
+          broker_code: String.t() | nil,
+          broker_branch: String.t() | nil,
+          member_name: String.t() | nil,
+          metadata_version: String.t() | nil,
+          metadata_timestamp: NaiveDateTime.t() | nil,
+          min_metadata_timestamp: NaiveDateTime.t() | nil,
+          metadata_id: String.t() | nil,
+          balance: String.t() | nil,
+          timeout_seconds: integer() | nil,
+          password_expiration: NaiveDateTime.t() | nil,
+          warn_password_expiration_days: integer() | nil,
+          office_list: String.t() | nil,
+          standard_names_version: String.t() | nil,
+          vendor_name: String.t() | nil,
+          server_product_name: String.t() | nil,
+          server_product_version: String.t() | nil,
+          operator_name: String.t() | nil,
+          role_name: String.t() | nil,
+          support_contact_information: String.t() | nil
+        }
+
+  @doc """
+  Parses session information returned as part of a login response.
+
+  Attempts to parse data types into equivalent Elixir types, but will pass through invalid values
+  as strings.
+
+  ## Examples
+
+      iex> ExRets.SessionInformation.parse("Info=USERID;Character;1")
+      %ExRets.SessionInformation{user_id: "1"}
+
+      iex> ExRets.SessionInformation.parse("Info=MetadataTimestamp;DateTime;2019-11-13T19:58:45Z")
+      %ExRets.SessionInformation{metadata_timestamp: ~N[2019-11-13T19:58:45Z]}
+
+      iex> ExRets.SessionInformation.parse("Info=MetadataTimestamp;DateTime;invalid")
+      %ExRets.SessionInformation{metadata_timestamp: "invalid"}
+  """
+  @doc since: "0.1.0"
+  @spec parse(LoginResponse.key_value_body()) :: t()
+  def parse(key_value_body) when is_binary(key_value_body) do
     params =
       key_value_body
       |> parse_login_response()
-      |> downcase_keys()
+      |> normalize_keys()
 
     %__MODULE__{
       user_id: params["userid"],
@@ -84,19 +112,23 @@ defmodule ExRets.SessionInformation do
     }
   end
 
-  defp parse_login_response(element) when is_binary(element) do
-    element
+  defp parse_login_response(key_value_body) do
+    key_value_body
     |> String.split("\n")
     |> Enum.reduce(%{}, &map_response_arguments/2)
   end
 
-  defp parse_login_response(_), do: %{}
+  defp map_response_arguments("Info" <> info, acc) do
+    trimmed_info =
+      info
+      |> String.trim()
+      |> String.trim_leading("=")
+      |> String.trim()
 
-  defp map_response_arguments("Info=" <> info, acc) do
-    case String.split(info, ";") do
+    case String.split(trimmed_info, ";") do
       [key, type, value] ->
-        lowercase_type = String.downcase(type)
-        parsed_value = parse_response_value(lowercase_type, value)
+        normalized_type = trim_and_downcase_string(type)
+        parsed_value = parse_response_value(normalized_type, value)
         Map.put(acc, key, parsed_value)
 
       [key, value] ->
@@ -111,25 +143,31 @@ defmodule ExRets.SessionInformation do
     acc
   end
 
+  defp trim_and_downcase_string(string) do
+    string
+    |> String.trim()
+    |> String.downcase()
+  end
+
   defp parse_response_value("datetime", value) do
-    case NaiveDateTime.from_iso8601(value) do
+    case value |> String.trim() |> NaiveDateTime.from_iso8601() do
       {:ok, datetime} -> datetime
       _ -> value
     end
   end
 
   defp parse_response_value("int", value) do
-    case Integer.parse(value) do
+    case value |> String.trim() |> Integer.parse() do
       {integer, _} -> integer
       _ -> value
     end
   end
 
   defp parse_response_value(_type, value) do
-    value
+    String.trim(value)
   end
 
-  defp downcase_keys(map) do
-    Enum.into(map, %{}, fn {k, v} -> {String.downcase(k), v} end)
+  defp normalize_keys(map) do
+    Enum.into(map, %{}, fn {k, v} -> {trim_and_downcase_string(k), v} end)
   end
 end
