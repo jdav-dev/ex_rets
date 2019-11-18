@@ -1,7 +1,5 @@
 defmodule ExRets.DigestAccessAuthentication.Response do
-  @moduledoc """
-  Digest access authentication response as described in RFC 2617 section 3.2.2.
-  """
+  @moduledoc false
   @moduledoc since: "0.1.0"
 
   alias ExRets.Credentials

@@ -1,7 +1,5 @@
 defmodule ExRets.DigestAccessAuthentication.Challenge do
-  @moduledoc """
-  Digest access authentication challenge as described in RFC 2617 section 3.2.1.
-  """
+  @moduledoc false
   @moduledoc since: "0.1.0"
 
   defstruct realm: nil,

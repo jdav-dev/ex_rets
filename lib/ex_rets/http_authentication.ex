@@ -1,7 +1,5 @@
 defmodule ExRets.HttpAuthentication do
-  @moduledoc """
-  Helper functions to authenticate HTTP requests.
-  """
+  @moduledoc false
   @moduledoc since: "0.1.0"
 
   alias ExRets.Credentials
