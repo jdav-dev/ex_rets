@@ -26,8 +26,21 @@ defmodule ExRets.SearchResponseTest do
 
     @tag :integration
     test "parses a search response from a stream", %{stream: stream} do
-      assert {:ok, %RetsResponse{response: %SearchResponse{}}} =
-               SearchResponse.parse(stream, Mock)
+      {:ok, rets_response} = SearchResponse.parse(stream, Mock)
+
+      assert %RetsResponse{
+               reply_code: 0,
+               reply_text: "Operation Successful",
+               response: %SearchResponse{
+                 count: 1,
+                 columns: ["Column1", "Column2"],
+                 rows: [
+                   ["Data1", "Data2"],
+                   ["", "Data2"]
+                 ],
+                 max_rows: true
+               }
+             } = rets_response
     end
 
     @tag :integration
