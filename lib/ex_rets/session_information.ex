@@ -35,30 +35,138 @@ defmodule ExRets.SessionInformation do
   @typedoc "Identity and parameter information."
   @typedoc since: "0.1.0"
   @type t :: %__MODULE__{
-          user_id: String.t() | nil,
-          user_class: String.t() | nil,
-          user_level: integer() | nil,
-          agent_code: String.t() | nil,
-          broker_code: String.t() | nil,
-          broker_branch: String.t() | nil,
-          member_name: String.t() | nil,
-          metadata_version: String.t() | nil,
-          metadata_timestamp: NaiveDateTime.t() | nil,
-          min_metadata_timestamp: NaiveDateTime.t() | nil,
-          metadata_id: String.t() | nil,
-          balance: String.t() | nil,
-          timeout_seconds: integer() | nil,
-          password_expiration: NaiveDateTime.t() | nil,
-          warn_password_expiration_days: integer() | nil,
-          office_list: String.t() | nil,
-          standard_names_version: String.t() | nil,
-          vendor_name: String.t() | nil,
-          server_product_name: String.t() | nil,
-          server_product_version: String.t() | nil,
-          operator_name: String.t() | nil,
-          role_name: String.t() | nil,
-          support_contact_information: String.t() | nil
+          user_id: user_id(),
+          user_class: user_class(),
+          user_level: user_level(),
+          agent_code: agent_code(),
+          broker_code: broker_code(),
+          broker_branch: broker_branch(),
+          member_name: member_name(),
+          metadata_version: metadata_version(),
+          metadata_timestamp: metadata_timestamp(),
+          min_metadata_timestamp: min_metadata_timestamp(),
+          metadata_id: metadata_id(),
+          balance: balance(),
+          timeout_seconds: timeout_seconds(),
+          password_expiration: password_expiration(),
+          warn_password_expiration_days: warn_password_expiration_days(),
+          office_list: office_list(),
+          standard_names_version: standard_names_version(),
+          vendor_name: vendor_name(),
+          server_product_name: server_product_name(),
+          server_product_version: server_product_version(),
+          operator_name: operator_name(),
+          role_name: role_name(),
+          support_contact_information: support_contact_information()
         }
+
+  @typedoc """
+  ID of the signed in user.
+  """
+  @typedoc since: "0.1.0"
+  @type user_id :: String.t()
+
+  @typedoc """
+  Used in the validation routines of the Update transaction.  Implementation dependent and may not
+  exist on some systems.
+  """
+  @typedoc since: "0.1.0"
+  @type user_class :: String.t()
+
+  @typedoc """
+  Used in the validation routines of the Update transaction.  Implementation dependent and may not
+  exist on some systems.
+  """
+  @typedoc since: "0.1.0"
+  @type user_level :: String.t()
+
+  @typedoc """
+  Code that is stored in the property records for the listing agent, selling agent, etc.
+  """
+  @typedoc since: "0.1.0"
+  @type agent_code :: String.t()
+
+  @typedoc "Used in the validation routines of the Update transaction."
+  @typedoc since: "0.1.0"
+  @type broker_code :: String.t() | nil
+
+  @typedoc "Used in the validation routines of the Update transaction."
+  @typedoc since: "0.1.0"
+  @type broker_branch :: String.t() | nil
+
+  @typedoc """
+  Member's full name (display name) as it is to appear on any printed output; for example
+  "Jane T. Row".
+  """
+  @typedoc since: "0.1.0"
+  @type member_name :: String.t() | nil
+
+  @typedoc "Most current version of the metadata that is available on the server."
+  @typedoc since: "0.1.0"
+  @type metadata_version :: String.t() | nil
+
+  @typedoc "Timestamp associated with the current version of metadata on the server."
+  @typedoc since: "0.1.0"
+  @type metadata_timestamp :: NaiveDateTime.t() | nil
+
+  @typedoc "Earliest version of the metadata that the server will support."
+  @typedoc since: "0.1.0"
+  @type min_metadata_timestamp :: NaiveDateTime.t() | nil
+
+  @typedoc "Persistent ID associated with the metadata applied to the current user session."
+  @typedoc since: "0.1.0"
+  @type metadata_id :: String.t() | nil
+
+  @typedoc "User-readable indication of the money balance in the account."
+  @typedoc since: "0.1.0"
+  @type balance :: String.t() | nil
+
+  @typedoc "Number of seconds after a transaction that a session will remain active."
+  @typedoc since: "0.1.0"
+  @type timeout_seconds :: integer() | nil
+
+  @typedoc "Date that the current user password becomes invalid."
+  @typedoc since: "0.1.0"
+  @type password_expiration :: NaiveDateTime.t() | nil
+
+  @typedoc """
+  Number of days before the expiration date that the user should be warned of the upcoming
+  password expiration.  A value of "-1" indicates that the password expiration is disabled.
+  """
+  @typedoc since: "0.1.0"
+  @type warn_password_expiration_days :: integer() | nil
+
+  @typedoc "Enumeration of the offices to which the server will permit login."
+  @typedoc since: "0.1.0"
+  @type office_list :: String.t() | nil
+
+  @typedoc "Version of StandardNames that the server supports."
+  @typedoc since: "0.1.0"
+  @type standard_names_version :: String.t() | nil
+
+  @typedoc "Name of the server product vendor."
+  @typedoc since: "0.1.0"
+  @type vendor_name :: String.t() | nil
+
+  @typedoc "Name of the server product provided by the vendor."
+  @typedoc since: "0.1.0"
+  @type server_product_name :: String.t() | nil
+
+  @typedoc "Version of the server product."
+  @typedoc since: "0.1.0"
+  @type server_product_version :: String.t() | nil
+
+  @typedoc "Name of the MLS or Association operating the system."
+  @typedoc since: "0.1.0"
+  @type operator_name :: String.t() | nil
+
+  @typedoc "Name of the role restriction where the metadata may be restricted."
+  @typedoc since: "0.1.0"
+  @type role_name :: String.t() | nil
+
+  @typedoc "Free text that provides a contact email, phone, or website for development support."
+  @typedoc since: "0.1.0"
+  @type support_contact_information :: String.t() | nil
 
   @doc """
   Parses session information returned as part of a login response.

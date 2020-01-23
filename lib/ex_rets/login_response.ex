@@ -7,12 +7,11 @@ defmodule ExRets.LoginResponse do
   """
   @moduledoc since: "0.1.0"
 
+  alias ExRets.BaseXmlParser
   alias ExRets.CapabilityUris
-  alias ExRets.HttpClient
+  alias ExRets.HttpClient.Httpc
   alias ExRets.RetsResponse
   alias ExRets.SessionInformation
-
-  defstruct session_information: %SessionInformation{}, capability_uris: %CapabilityUris{}
 
   @typedoc "Information necessary for a client to issue other requests."
   @typedoc since: "0.1.0"
@@ -21,39 +20,24 @@ defmodule ExRets.LoginResponse do
           capability_uris: CapabilityUris.t()
         }
 
+  defstruct session_information: %SessionInformation{}, capability_uris: %CapabilityUris{}
+
   @typedoc "Key-value format used in the login response body."
   @typedoc since: "0.1.0"
   @type key_value_body :: String.t()
 
   @doc false
-  def parse(stream, login_uri) do
+  @doc since: "0.1.0"
+  def parse(stream, login_uri, http_client_implementation \\ Httpc) do
     event_state = %{
       characters: [],
       login_uri: login_uri,
       rets_response: %RetsResponse{}
     }
 
-    opts = [
-      continuation_fun: &continuation_fun/1,
-      continuation_state: stream,
-      event_fun: &event_fun/3,
-      event_state: event_state
-    ]
-
-    result =
-      with {:ok, xml} <- HttpClient.stream_next(stream),
-           {:ok, %{rets_response: rets_response}, _} <- :xmerl_sax_parser.stream(xml, opts) do
-        {:ok, rets_response}
-      end
-
-    HttpClient.close_stream(stream)
-    result
-  end
-
-  defp continuation_fun(stream) do
-    case HttpClient.stream_next(stream) do
-      {:ok, xml} -> {xml, stream}
-      {:error, reason} -> throw({:error, reason})
+    with {:ok, %{rets_response: rets_response}} <-
+           BaseXmlParser.parse(stream, &event_fun/3, event_state, http_client_implementation) do
+      {:ok, rets_response}
     end
   end
 
