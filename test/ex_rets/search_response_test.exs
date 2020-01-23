@@ -40,7 +40,7 @@ defmodule ExRets.SearchResponseTest do
                  ],
                  max_rows: true
                }
-             } = rets_response
+             } == rets_response
     end
 
     @tag :integration
