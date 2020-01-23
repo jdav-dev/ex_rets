@@ -78,7 +78,7 @@ defmodule ExRets.SessionInformation do
   exist on some systems.
   """
   @typedoc since: "0.1.0"
-  @type user_level :: String.t()
+  @type user_level :: non_neg_integer()
 
   @typedoc """
   Code that is stored in the property records for the listing agent, selling agent, etc.
@@ -138,7 +138,7 @@ defmodule ExRets.SessionInformation do
 
   @typedoc "Enumeration of the offices to which the server will permit login."
   @typedoc since: "0.1.0"
-  @type office_list :: String.t() | nil
+  @type office_list :: [String.t()] | nil
 
   @typedoc "Version of StandardNames that the server supports."
   @typedoc since: "0.1.0"
@@ -209,7 +209,7 @@ defmodule ExRets.SessionInformation do
       timeout_seconds: params["timeoutseconds"],
       password_expiration: params["passwordexpiration"],
       warn_password_expiration_days: params["warnpasswordexpirationdays"],
-      office_list: params["officelist"],
+      office_list: get_csv_field(params, "officelist"),
       standard_names_version: params["standardnamesversion"],
       vendor_name: params["vendorname"],
       server_product_name: params["serverproductname"],
@@ -223,6 +223,7 @@ defmodule ExRets.SessionInformation do
   defp parse_login_response(key_value_body) do
     key_value_body
     |> String.split("\n")
+    |> Enum.map(&String.trim/1)
     |> Enum.reduce(%{}, &map_response_arguments/2)
   end
 
@@ -277,5 +278,14 @@ defmodule ExRets.SessionInformation do
 
   defp normalize_keys(map) do
     Enum.into(map, %{}, fn {k, v} -> {trim_and_downcase_string(k), v} end)
+  end
+
+  defp get_csv_field(params, key) do
+    if value = params[key] do
+      value
+      |> String.split(",")
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+    end
   end
 end
