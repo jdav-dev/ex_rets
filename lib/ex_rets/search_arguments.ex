@@ -7,13 +7,13 @@ defmodule ExRets.SearchArguments do
   @enforce_keys [:search_type, :class]
   defstruct search_type: nil,
             class: nil,
-            count: 0,
+            count: :no_record_count,
             format: "COMPACT-DECODED",
             limit: "NONE",
             offset: 1,
             select: nil,
             restricted_indicator: nil,
-            standard_names: 0,
+            standard_names: false,
             payload: nil,
             query: nil,
             query_type: "DMQL2"
@@ -48,12 +48,12 @@ defmodule ExRets.SearchArguments do
 
   Possible values:
 
-  * 0 - no record count returned
-  * 1 - record-count is returned in addition to the data
-  * 2 - only a record-count is returned; no data is returned
+  * `:no_record_count` - no record count returned
+  * `:include_record_count` - record-count is returned in addition to the data
+  * `:only_record_count` - only a record-count is returned; no data is returned
   """
   @typedoc since: "0.1.0"
-  @type count :: 0 | 1 | 2
+  @type count :: :no_record_count | :include_record_count | :only_record_count
 
   @typedoc """
   Selects one of the three supported data return formats for the query response.
@@ -100,11 +100,11 @@ defmodule ExRets.SearchArguments do
 
   Possible values:
 
-  * 0 - system name
-  * 1 - standard name
+  * `false` - system names
+  * `true` - standard names
   """
   @typedoc since: "0.1.0"
-  @type standard_names :: 0 | 1
+  @type standard_names :: boolean()
 
   @typedoc """
   Request a specific XML format for the return set.
@@ -143,10 +143,18 @@ defmodule ExRets.SearchArguments do
   def encode_query(%__MODULE__{} = search_arguments) do
     search_arguments
     |> Map.from_struct()
+    |> Enum.into(%{}, &format_key_and_value/1)
     |> Enum.reject(fn {_, v} -> is_nil(v) end)
-    |> Enum.into(%{}, fn {k, v} -> {to_camel_case(k), v} end)
     |> URI.encode_query()
   end
+
+  defp format_key_and_value({:count, :no_record_count}), do: {"Count", 0}
+  defp format_key_and_value({:count, :include_record_count}), do: {"Count", 1}
+  defp format_key_and_value({:count, :only_record_count}), do: {"Count", 2}
+  defp format_key_and_value({:count, _}), do: {"Count", 0}
+  defp format_key_and_value({:standard_names, false}), do: {"StandardNames", 0}
+  defp format_key_and_value({:standard_names, true}), do: {"StandardNames", 1}
+  defp format_key_and_value({k, v}), do: {to_camel_case(k), v}
 
   defp to_camel_case(atom) do
     atom

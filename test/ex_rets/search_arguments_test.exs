@@ -8,16 +8,17 @@ defmodule ExRets.SearchArgumentsTest do
   @search_arguments %SearchArguments{
     search_type: "Property",
     class: "Residential",
-    count: 1,
+    count: :include_record_count,
     format: "COMPACT",
     limit: 1000,
     offset: 2000,
-    select: "ListingKey"
+    select: "ListingKey",
+    standard_names: true
   }
 
   describe "encode_query/1" do
     test "encodes and escapes search arguments" do
-      assert "Class=Residential&Count=1&Format=COMPACT&Limit=1000&Offset=2000&QueryType=DMQL2&SearchType=Property&Select=ListingKey&StandardNames=0" ==
+      assert "Class=Residential&Count=1&Format=COMPACT&Limit=1000&Offset=2000&QueryType=DMQL2&SearchType=Property&Select=ListingKey&StandardNames=1" ==
                SearchArguments.encode_query(@search_arguments)
     end
   end
