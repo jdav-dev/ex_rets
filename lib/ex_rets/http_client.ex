@@ -23,7 +23,7 @@ defmodule ExRets.HttpClient do
   @typedoc since: "0.1.0"
   @type reason() :: any()
 
-  @callback start_client(name(), opts()) :: {:ok, client()}
+  @callback start_client(name(), opts()) :: {:ok, client()} | {:error, reason()}
   @callback open_stream(client(), HttpRequest.t()) ::
               {:ok, HttpResponse.t(), stream()} | {:error, reason()}
   @callback open_stream(client(), HttpRequest.t(), opts()) ::

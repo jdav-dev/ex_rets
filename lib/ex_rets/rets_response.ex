@@ -7,7 +7,7 @@ defmodule ExRets.RetsResponse do
   alias ExRets.LoginResponse
   alias ExRets.SearchResponse
 
-  @typedoc "The parsed response of a RETS request."
+  @typedoc "Parsed response of a RETS request."
   @typedoc since: "0.1.0"
   @type t :: %__MODULE__{
           reply_code: reply_code(),
