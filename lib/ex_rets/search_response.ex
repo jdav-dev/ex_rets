@@ -13,12 +13,19 @@ defmodule ExRets.SearchResponse do
   @typedoc "Records matching a search query."
   @typedoc since: "0.1.0"
   @type t :: %__MODULE__{
-          count: non_neg_integer(),
+          count: non_neg_integer() | nil,
           columns: [String.t()],
-          rows: [String.t()]
+          rows: [String.t()],
+          max_rows: max_rows()
         }
 
-  defstruct count: nil, columns: [], rows: []
+  defstruct count: nil, columns: [], rows: [], max_rows: false
+
+  @typedoc """
+  `true` if the request results in more matches than the server returns, `false` otherwise.
+  """
+  @typedoc since: "0.1.0"
+  @type max_rows :: boolean()
 
   @doc false
   @doc since: "0.1.0"
@@ -74,6 +81,10 @@ defmodule ExRets.SearchResponse do
       _, acc ->
         acc
     end)
+  end
+
+  defp event_fun({:startElement, _, 'MAXROWS', _, _attributes}, _, state) do
+    put_in(state.rets_response.response.max_rows, true)
   end
 
   defp event_fun({:startElement, _, _name, _, _attributes}, _, state) do
