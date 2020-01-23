@@ -15,7 +15,7 @@ defmodule ExRets.SearchResponse do
   @type t :: %__MODULE__{
           count: non_neg_integer() | nil,
           columns: [String.t()],
-          rows: [String.t()],
+          rows: [[String.t()]],
           max_rows: max_rows()
         }
 
@@ -38,6 +38,9 @@ defmodule ExRets.SearchResponse do
 
     with {:ok, %{rets_response: rets_response}} <-
            BaseXmlParser.parse(stream, &event_fun/3, event_state, http_client_implementation) do
+      rets_response =
+        put_in(rets_response.response.rows, Enum.reverse(rets_response.response.rows))
+
       {:ok, rets_response}
     end
   end
