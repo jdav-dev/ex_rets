@@ -1,9 +1,17 @@
 defmodule ExRets.SearchResponse do
+  @moduledoc """
+  Records matching a search query.
+  """
+  @moduledoc since: "0.1.0"
+
+  alias ExRets.BaseXmlParser
   alias ExRets.CompactDelimiter
   alias ExRets.CompactRecord
-  alias ExRets.HttpClient
+  alias ExRets.HttpClient.Httpc
   alias ExRets.RetsResponse
 
+  @typedoc "Records matching a search query."
+  @typedoc since: "0.1.0"
   @type t :: %__MODULE__{
           count: non_neg_integer(),
           columns: [String.t()],
@@ -12,34 +20,18 @@ defmodule ExRets.SearchResponse do
 
   defstruct count: nil, columns: [], rows: []
 
-  def parse(stream) do
+  @doc false
+  @doc since: "0.1.0"
+  def parse(stream, http_client_implementation \\ Httpc) do
     event_state = %{
       characters: [],
       delimiter: "\t",
       rets_response: %RetsResponse{response: %__MODULE__{}}
     }
 
-    opts = [
-      continuation_fun: &continuation_fun/1,
-      continuation_state: stream,
-      event_fun: &event_fun/3,
-      event_state: event_state
-    ]
-
-    result =
-      with {:ok, xml} <- HttpClient.stream_next(stream),
-           {:ok, %{rets_response: rets_response}, _} <- :xmerl_sax_parser.stream(xml, opts) do
-        {:ok, rets_response}
-      end
-
-    HttpClient.close_stream(stream)
-    result
-  end
-
-  defp continuation_fun(stream) do
-    case HttpClient.stream_next(stream) do
-      {:ok, xml} -> {xml, stream}
-      {:error, reason} -> throw({:error, reason})
+    with {:ok, %{rets_response: rets_response}} <-
+           BaseXmlParser.parse(stream, &event_fun/3, event_state, http_client_implementation) do
+      {:ok, rets_response}
     end
   end
 
@@ -76,7 +68,7 @@ defmodule ExRets.SearchResponse do
 
         case CompactDelimiter.decode(value) do
           {:ok, delimiter} -> put_in(acc.delimiter, delimiter)
-          :error -> acc
+          :error -> throw({:fatal_error, "Invalid delimiter"})
         end
 
       _, acc ->

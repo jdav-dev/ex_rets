@@ -5,6 +5,7 @@ defmodule ExRets.Client do
   alias ExRets.Credentials
   alias ExRets.HttpAuthentication
   alias ExRets.HttpClient
+  alias ExRets.HttpClient.Httpc
   alias ExRets.HttpRequest
   alias ExRets.HttpResponse
   alias ExRets.LoginResponse
@@ -16,7 +17,7 @@ defmodule ExRets.Client do
 
   @opaque t :: %__MODULE__{
             credentials: Credentials.t(),
-            http_client: HttpClient.t(),
+            http_client: HttpClient.client(),
             http_timeout: non_neg_integer() | :infinity,
             login_response: LoginResponse.t(),
             middleware: [middleware()]
@@ -30,7 +31,7 @@ defmodule ExRets.Client do
   def start_client(%Credentials{} = credentials, opts \\ []) do
     http_timeout = Keyword.get(opts, :timeout, :timer.minutes(15))
 
-    with {:ok, http_client} <- HttpClient.start_client(credentials.system_id) do
+    with {:ok, http_client} <- Httpc.start_client(credentials.system_id) do
       middleware = [
         default_headers_middleware_fun(credentials),
         login_middleware_fun(credentials),
@@ -125,7 +126,7 @@ defmodule ExRets.Client do
   end
 
   def stop_client(%__MODULE__{http_client: http_client}) do
-    HttpClient.stop_client(http_client)
+    Httpc.stop_client(http_client)
   end
 
   def login(%__MODULE__{} = rets_client) do
@@ -149,7 +150,7 @@ defmodule ExRets.Client do
 
   defp open_stream(%__MODULE__{http_timeout: timeout} = rets_client, request) do
     open_stream_fun = fn request ->
-      HttpClient.open_stream(rets_client.http_client, request, timeout: timeout)
+      Httpc.open_stream(rets_client.http_client, request, timeout: timeout)
     end
 
     run =
