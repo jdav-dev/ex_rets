@@ -8,7 +8,7 @@ defmodule ExRets.HttpRequest do
   @type t :: %__MODULE__{
           method: :get | :post,
           uri: URI.t(),
-          headers: ExRets.HttpAdapter.headers(),
+          headers: ExRets.HttpClient.headers(),
           body: String.t()
         }
 

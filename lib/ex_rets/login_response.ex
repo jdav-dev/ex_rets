@@ -21,6 +21,10 @@ defmodule ExRets.LoginResponse do
 
   defstruct session_information: %SessionInformation{}, capability_uris: %CapabilityUris{}
 
+  @typedoc "Key-value format used in the login response body."
+  @typedoc since: "0.1.0"
+  @type key_value_body :: String.t()
+
   @doc false
   @doc since: "0.1.0"
   def parse(stream, login_uri, http_client_implementation) do

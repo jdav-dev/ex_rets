@@ -6,22 +6,28 @@ defmodule ExRets.HttpClient do
   alias ExRets.HttpResponse
 
   @typedoc since: "0.1.0"
-  @type name() :: atom()
+  @type name :: atom()
 
   @typedoc since: "0.1.0"
-  @type opts() :: keyword()
+  @type opts :: keyword()
 
   @typedoc since: "0.1.0"
-  @type client() :: any()
+  @type client :: any()
 
   @typedoc since: "0.1.0"
-  @type stream() :: any()
+  @type stream :: any()
 
   @typedoc since: "0.1.0"
-  @type stream_part() :: String.t()
+  @type stream_part :: String.t()
 
   @typedoc since: "0.1.0"
-  @type reason() :: any()
+  @type reason :: any()
+
+  @typedoc since: "0.1.0"
+  @type header :: {binary(), binary()}
+
+  @typedoc since: "0.1.0"
+  @type headers :: [header()]
 
   @callback start_client(name(), opts()) :: {:ok, client()} | {:error, reason()}
   @callback open_stream(client(), HttpRequest.t()) ::
