@@ -13,7 +13,7 @@ defmodule ExRets.LoginResponseTest do
   @login_uri URI.parse("https://example.com/login")
 
   @login_response_body """
-  <RETS ReplyCode="0" ReplyText="Operation Successful">
+  <RETS ReplyCode="0" ReplyText="Operation Successful" IgnoreMe="Please">
     <RETS-RESPONSE>
       Info=USERID;Character;some_agent_id
       Info=USERCLASS;Character;some_user_class

@@ -1,4 +1,4 @@
-defmodule ExRets.Client do
+defmodule ExRets.RetsClient do
   @moduledoc false
   @moduledoc since: "0.1.0"
 
@@ -20,6 +20,8 @@ defmodule ExRets.Client do
             middleware: [middleware()]
           }
 
+  @derive {Inspect, only: [:credentials]}
+  # TODO: Enforce all of these keys
   defstruct [
     :credentials,
     :http_client,

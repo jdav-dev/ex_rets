@@ -9,7 +9,6 @@ defmodule ExRets.LoginResponse do
 
   alias ExRets.BaseXmlParser
   alias ExRets.CapabilityUris
-  alias ExRets.HttpClient.Httpc
   alias ExRets.RetsResponse
   alias ExRets.SessionInformation
 
@@ -28,7 +27,7 @@ defmodule ExRets.LoginResponse do
 
   @doc false
   @doc since: "0.1.0"
-  def parse(stream, login_uri, http_client_implementation \\ Httpc) do
+  def parse(stream, login_uri, http_client_implementation) do
     event_state = %{
       characters: [],
       login_uri: login_uri,
