@@ -13,8 +13,8 @@ defmodule ExRets.HttpClient.Mock do
   @impl HttpClient
   @doc since: "0.1.0"
   def start_client(name, opts \\ []) when is_atom(name) and is_list(opts) do
-    response = opts[:response] || %HttpResponse{}
-    stream = opts[:stream] || []
+    response = Keyword.get(opts, :response, %HttpResponse{})
+    stream = Keyword.get(opts, :stream, [])
     {:ok, %__MODULE__{name: name, response: response, stream: stream}}
   end
 
@@ -22,9 +22,13 @@ defmodule ExRets.HttpClient.Mock do
   @doc since: "0.1.0"
   def open_stream(%__MODULE__{response: response, stream: stream}, %HttpRequest{}, opts \\ [])
       when is_list(opts) do
-    response = opts[:response] || response
-    stream = opts[:stream] || stream
-    {:ok, response, stream}
+    response = Keyword.get(opts, :response, response)
+    stream = Keyword.get(opts, :stream, stream)
+
+    case stream do
+      nil -> {:ok, response}
+      stream when is_list(stream) -> {:ok, response, stream}
+    end
   end
 
   @impl HttpClient

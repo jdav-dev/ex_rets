@@ -40,6 +40,11 @@ defmodule ExRets.HttpClient.MockTest do
     end
 
     @tag :unit
+    test "doesn't return a stream if stream is nil", %{client: client, request: request} do
+      assert {:ok, _response} = Mock.open_stream(client, request, stream: nil)
+    end
+
+    @tag :unit
     test "allows setting the response", %{client: client, request: request} do
       response = %HttpResponse{body: "different test response"}
       assert {:ok, ^response, _stream} = Mock.open_stream(client, request, response: response)

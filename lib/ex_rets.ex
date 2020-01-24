@@ -4,22 +4,18 @@ defmodule ExRets do
   require Logger
 
   alias ExRets.CapabilityUris
-  alias ExRets.Client
   alias ExRets.Credentials
-  alias ExRets.HttpAuthentication
   alias ExRets.HttpClient.Httpc
   alias ExRets.HttpRequest
-  alias ExRets.HttpResponse
   alias ExRets.LoginResponse
+  alias ExRets.Middleware
+  alias ExRets.RetsClient
   alias ExRets.SearchArguments
   alias ExRets.SearchResponse
 
-  @project_version Mix.Project.config() |> Keyword.fetch!(:version)
-  @default_user_agent "#{__MODULE__}/#{@project_version}"
-
   @typedoc "RETS client."
   @typedoc since: "0.1.0"
-  @opaque client :: Client.t()
+  @opaque client :: RetsClient.t()
 
   @doc since: "0.1.0"
   def start_client(%Credentials{} = credentials, opts \\ []) do
@@ -28,13 +24,13 @@ defmodule ExRets do
 
     with {:ok, http_client} <- http_client_implementation.start_client(credentials.system_id) do
       middleware = [
-        default_headers_middleware_fun(credentials),
-        login_middleware_fun(credentials),
-        auth_headers_middleware_fun(credentials),
-        &logger_middleware/2
+        {Middleware.DefaultHeaders, credentials},
+        {Middleware.Login, credentials},
+        {Middleware.AuthHeaders, credentials},
+        Middleware.Logger
       ]
 
-      rets_client = %Client{
+      rets_client = %RetsClient{
         credentials: credentials,
         http_client: http_client,
         http_client_implementation: http_client_implementation,
@@ -46,83 +42,8 @@ defmodule ExRets do
     end
   end
 
-  defp default_headers_middleware_fun(credentials) do
-    default_headers = [
-      {"user-agent", credentials.user_agent || @default_user_agent},
-      {"rets-version", credentials.rets_version},
-      {"accept", "*/*"}
-    ]
-
-    fn %HttpRequest{headers: headers} = request, next ->
-      %HttpRequest{request | headers: headers ++ default_headers}
-      |> next.()
-    end
-  end
-
-  defp login_middleware_fun(credentials) do
-    fn %HttpRequest{} = request, next ->
-      case next.(request) do
-        {:error, :not_logged_in} ->
-          login_uri = credentials.login_uri
-          login_request = %HttpRequest{uri: login_uri}
-
-          case next.(login_request) do
-            {:ok, _} -> next.(request)
-            result -> result
-          end
-
-        result ->
-          result
-      end
-    end
-  end
-
-  defp auth_headers_middleware_fun(credentials) do
-    fn %HttpRequest{} = request, next ->
-      with {:ok, %HttpResponse{status: 401} = response} <- next.(request),
-           {:ok, updated_request} <-
-             HttpAuthentication.answer_challenge(request, response, credentials) do
-        next.(updated_request)
-      else
-        false -> {:error, :not_logged_in}
-        result -> result
-      end
-    end
-  end
-
-  defp logger_middleware(%HttpRequest{} = request, next) do
-    request_id = generate_request_id()
-    Logger.debug("RETS request:\n#{inspect(request, pretty: true)}", request_id: request_id)
-    result = next.(request)
-
-    case result do
-      {:ok, response, _stream} ->
-        Logger.debug("Begin RETS response:\n#{inspect(response, pretty: true)}",
-          request_id: request_id
-        )
-
-      {:ok, response} ->
-        Logger.debug("RETS response:\n#{inspect(response, pretty: true)}", request_id: request_id)
-
-      error ->
-        Logger.error("RETS request failed:\n#{inspect(error, pretty: true)}")
-    end
-
-    result
-  end
-
-  defp generate_request_id do
-    binary = <<
-      System.system_time(:nanosecond)::64,
-      :erlang.phash2({node(), self()}, 16_777_216)::24,
-      :erlang.unique_integer()::32
-    >>
-
-    Base.url_encode64(binary)
-  end
-
   @doc since: "0.1.0"
-  def stop_client(%Client{
+  def stop_client(%RetsClient{
         http_client: http_client,
         http_client_implementation: http_client_implementation
       }) do
@@ -130,47 +51,30 @@ defmodule ExRets do
   end
 
   @doc since: "0.1.0"
-  def login(%Client{} = rets_client) do
+  def login(%RetsClient{} = rets_client) do
     rets_client
     |> login_fun()
     |> Task.async()
     |> Task.await(:infinity)
   end
 
-  defp login_fun(%Client{} = rets_client) do
+  defp login_fun(%RetsClient{} = rets_client) do
     fn ->
       login_uri = rets_client.credentials.login_uri
       request = %HttpRequest{uri: login_uri}
+      http_client_implementation = rets_client.http_client_implementation
 
-      with {:ok, _response, stream} <- open_stream(rets_client, request),
-           {:ok, rets_response} <- LoginResponse.parse(stream, login_uri) do
-        {:ok, %Client{rets_client | login_response: rets_response.response}}
+      with {:ok, _response, stream} <- Middleware.open_stream(rets_client, request),
+           {:ok, rets_response} <-
+             LoginResponse.parse(stream, login_uri, http_client_implementation) do
+        {:ok, %RetsClient{rets_client | login_response: rets_response.response}}
       end
     end
   end
 
-  defp open_stream(
-         %Client{http_client_implementation: http_client_implementation, http_timeout: timeout} =
-           rets_client,
-         request
-       ) do
-    open_stream_fun = fn request ->
-      http_client_implementation.open_stream(rets_client.http_client, request, timeout: timeout)
-    end
-
-    run =
-      rets_client.middleware
-      |> Enum.reverse()
-      |> Enum.reduce(open_stream_fun, fn middleware, next ->
-        fn request -> middleware.(request, next) end
-      end)
-
-    run.(request)
-  end
-
   @doc since: "0.1.0"
   def search(
-        %Client{
+        %RetsClient{
           login_response: %LoginResponse{
             capability_uris: %CapabilityUris{search: %URI{}}
           }
@@ -185,15 +89,15 @@ defmodule ExRets do
 
   def search(_not_logged_in_rets_client, _search_arguments), do: {:error, :not_logged_in}
 
-  defp search_fun(%Client{} = rets_client, search_arguments) do
-    search_uri = rets_client.login_response.capability_uris.search
-
+  defp search_fun(%RetsClient{} = rets_client, search_arguments) do
     fn ->
+      search_uri = rets_client.login_response.capability_uris.search
       body = SearchArguments.encode_query(search_arguments)
       request = %HttpRequest{method: :post, uri: search_uri, body: body}
+      http_client_implementation = rets_client.http_client_implementation
 
-      with {:ok, _response, stream} <- open_stream(rets_client, request) do
-        SearchResponse.parse(stream)
+      with {:ok, _response, stream} <- Middleware.open_stream(rets_client, request) do
+        SearchResponse.parse(stream, http_client_implementation)
       end
     end
   end
