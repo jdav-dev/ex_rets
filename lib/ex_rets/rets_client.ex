@@ -21,7 +21,6 @@ defmodule ExRets.RetsClient do
           }
 
   @derive {Inspect, only: [:credentials]}
-  # TODO: Enforce all of these keys
   defstruct [
     :credentials,
     :http_client,
