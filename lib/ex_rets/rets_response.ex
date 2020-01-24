@@ -5,6 +5,7 @@ defmodule ExRets.RetsResponse do
   @moduledoc since: "0.1.0"
 
   alias ExRets.LoginResponse
+  alias ExRets.LogoutResponse
   alias ExRets.SearchResponse
 
   @typedoc "Parsed response of a RETS request."
@@ -33,5 +34,5 @@ defmodule ExRets.RetsResponse do
 
   @typedoc "Main content of the RETS response."
   @typedoc since: "0.1.0"
-  @type response :: LoginResponse.t() | SearchResponse.t()
+  @type response :: LoginResponse.t() | LogoutResponse.t() | SearchResponse.t()
 end
