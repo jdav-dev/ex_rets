@@ -1,4 +1,7 @@
 defmodule ExRets do
+  @moduledoc """
+  RETS client for Elixir.
+  """
   @moduledoc since: "0.1.0"
 
   require Logger
@@ -7,10 +10,12 @@ defmodule ExRets do
   alias ExRets.Credentials
   alias ExRets.HttpClient.Httpc
   alias ExRets.HttpRequest
+  alias ExRets.HttpResponse
   alias ExRets.LoginResponse
   alias ExRets.LogoutResponse
   alias ExRets.Middleware
   alias ExRets.RetsClient
+  alias ExRets.RetsResponse
   alias ExRets.SearchArguments
   alias ExRets.SearchResponse
 
@@ -18,7 +23,18 @@ defmodule ExRets do
   @typedoc since: "0.1.0"
   @opaque client :: RetsClient.t()
 
+  @typedoc "Options for the RETS client."
+  @typedoc since: "0.1.0"
+  @type opts :: keyword()
+
+  @typedoc "Details about why an error occurred."
+  @typedoc since: "0.1.0"
+  @type reason :: any()
+
+  @doc "Open an HTTP client and log in to a RETS server."
   @doc since: "0.1.0"
+  @spec login(Credentials.t(), opts()) ::
+          {:ok, RetsClient.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def login(%Credentials{} = credentials, opts \\ []) do
     with {:ok, rets_client} <- new_rets_client(credentials, opts) do
       rets_client
@@ -66,7 +82,10 @@ defmodule ExRets do
     end
   end
 
+  @doc "Logout and close the HTTP client."
   @doc since: "0.1.0"
+  @spec logout(RetsClient.t()) ::
+          {:ok, RetsResponse.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def logout(%RetsClient{} = rets_client) do
     rets_client
     |> logout_fun()
@@ -87,7 +106,10 @@ defmodule ExRets do
     end
   end
 
+  @doc "Perform a RETS search."
   @doc since: "0.1.0"
+  @spec search(RetsClient.t(), SearchArguments.t()) ::
+          {:ok, RetsResponse.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def search(
         %RetsClient{
           login_response: %LoginResponse{

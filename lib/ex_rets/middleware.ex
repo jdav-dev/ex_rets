@@ -12,7 +12,7 @@ defmodule ExRets.Middleware do
           (HttpRequest.t() ->
              {:ok, HttpResponse.t()}
              | {:ok, HttpResponse.t(), HttpClient.stream()}
-             | {:error, reason :: any()})
+             | {:error, ExRets.reason()})
 
   @callback init(opts()) :: opts()
   @callback call(HttpRequest.t(), next(), opts()) :: HttpResponse.t()
