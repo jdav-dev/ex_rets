@@ -21,7 +21,8 @@ defmodule ExRets.Middleware.Login do
         login_request = %HttpRequest{uri: login_uri}
 
         case next.(login_request) do
-          {:ok, _} -> next.(request)
+          {:ok, _response} -> next.(request)
+          {:ok, _response, _stream} -> next.(request)
           result -> result
         end
 
