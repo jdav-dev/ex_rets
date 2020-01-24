@@ -1,15 +1,28 @@
 defmodule ExRets.HttpResponse do
-  @moduledoc false
+  @moduledoc """
+  An HTTP response.
+  """
   @moduledoc since: "0.1.0"
 
   defstruct status: 200, headers: [], body: ""
 
+  @typedoc "HTTP response"
+  @typedoc since: "0.1.0"
   @type t :: %__MODULE__{
-          status: integer(),
+          status: status(),
           headers: ExRets.HttpClient.headers(),
-          body: String.t()
+          body: body()
         }
 
+  @typedoc "HTTP status code"
+  @typedoc since: "0.1.0"
+  @type status :: non_neg_integer()
+
+  @typedoc "HTTP response body"
+  @typedoc since: "0.1.0"
+  @type body :: String.t()
+
+  @doc false
   @doc since: "0.1.0"
   def from_httpc({{_, status, _}, headers, body}) do
     headers = Enum.map(headers, fn {key, value} -> {to_string(key), to_string(value)} end)
