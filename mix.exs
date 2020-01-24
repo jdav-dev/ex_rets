@@ -17,13 +17,16 @@ defmodule ExRets.MixProject do
         source_ref: "v#{@version}",
         source_url: "https://github.com/jdav-dev/ex_rets",
         groups_for_modules: [
-          "Login transaction": [
+          Login: [
             ExRets.CapabilityUris,
             ExRets.Credentials,
             ExRets.LoginResponse,
             ExRets.SessionInformation
           ],
-          "Search transaction": [
+          Logout: [
+            ExRets.LogoutResponse
+          ],
+          Search: [
             ExRets.CompactDelimiter,
             ExRets.CompactRecord,
             ExRets.SearchArguments,
