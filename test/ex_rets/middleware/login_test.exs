@@ -37,7 +37,7 @@ defmodule ExRets.Middleware.LoginTest do
     end
 
     @tag :unit
-    test "retries the original request after a successful login" do
+    test "retries the original request after a successful login with no stream" do
       {:ok, agent} = Agent.start_link(fn -> 0 end)
 
       next = fn
@@ -53,6 +53,28 @@ defmodule ExRets.Middleware.LoginTest do
 
         %HttpRequest{uri: @login_uri} ->
           {:ok, %HttpResponse{}}
+      end
+
+      assert {:ok, %HttpResponse{body: "test passed"}} == Login.call(@request, next, @credentials)
+    end
+
+    @tag :unit
+    test "retries the original request after a successful login with a stream" do
+      {:ok, agent} = Agent.start_link(fn -> 0 end)
+
+      next = fn
+        %HttpRequest{uri: @search_uri, headers: []} ->
+          case Agent.get(agent, & &1) do
+            0 ->
+              Agent.update(agent, &(&1 + 1))
+              {:error, :challenge_not_found}
+
+            _ ->
+              {:ok, %HttpResponse{body: "test passed"}}
+          end
+
+        %HttpRequest{uri: @login_uri} ->
+          {:ok, %HttpResponse{}, []}
       end
 
       assert {:ok, %HttpResponse{body: "test passed"}} == Login.call(@request, next, @credentials)
