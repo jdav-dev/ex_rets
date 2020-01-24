@@ -4,11 +4,13 @@ defmodule ExRets.RetsClient do
 
   alias ExRets.Credentials
   alias ExRets.HttpClient
+  alias ExRets.HttpRequest
+  alias ExRets.HttpResponse
   alias ExRets.LoginResponse
 
   @typedoc since: "0.1.0"
   @type middleware ::
-          (Request.t(), next :: middleware() -> {:ok, Response.t()} | {:error, any()})
+          (HttpRequest.t(), next :: middleware() -> {:ok, HttpResponse.t()} | {:error, any()})
 
   @typedoc since: "0.1.0"
   @opaque t :: %__MODULE__{

@@ -6,7 +6,7 @@ defmodule ExRets.HttpResponse do
 
   @type t :: %__MODULE__{
           status: integer(),
-          headers: ExRets.HttpAdapter.headers(),
+          headers: ExRets.HttpClient.headers(),
           body: String.t()
         }
 
