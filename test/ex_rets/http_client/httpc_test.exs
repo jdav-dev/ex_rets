@@ -27,6 +27,12 @@ defmodule ExRets.HttpClient.HttpcTest do
   describe "open_stream/3" do
     setup :start_client
 
+    @tag :unit
+    test "returns an error if the client process is not alive", %{client: client} do
+      Httpc.stop_client(client)
+      assert {:error, :http_client_stopped} = Httpc.open_stream(client, @request)
+    end
+
     @tag :reso_dot_org
     test "returns the http response", %{client: client} do
       assert {:ok, %HttpResponse{status: 200}, _stream} = Httpc.open_stream(client, @request)

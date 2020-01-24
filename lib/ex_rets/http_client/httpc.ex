@@ -34,11 +34,15 @@ defmodule ExRets.HttpClient.Httpc do
   @doc since: "0.1.0"
   def open_stream(client, %HttpRequest{} = request, http_opts \\ [])
       when is_pid(client) and is_list(http_opts) do
-    with {:ok, stream} <-
+    with true <- Process.alive?(client),
+         {:ok, stream} <-
            GenServer.start_link(__MODULE__, {client, request, http_opts}),
          {:ok, %HttpResponse{status: 200} = response} <-
            GenServer.call(stream, :start_stream, :infinity) do
       {:ok, response, stream}
+    else
+      false -> {:error, :http_client_stopped}
+      error -> error
     end
   end
 
