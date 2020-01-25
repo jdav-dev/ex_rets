@@ -108,8 +108,8 @@ defmodule ExRets.HttpAuthentication do
   end
 
   defp set_authorization_header(%HttpRequest{headers: headers} = request, value) do
-    headers = Enum.reject(headers, fn {header, _} -> header == @authorization_header end)
-    headers = [{@authorization_header, value} | headers]
-    %HttpRequest{request | headers: headers}
+    filtered_headers = Enum.reject(headers, fn {header, _} -> header == @authorization_header end)
+    headers_with_new_authorization = [{@authorization_header, value} | filtered_headers]
+    %HttpRequest{request | headers: headers_with_new_authorization}
   end
 end

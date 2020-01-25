@@ -53,31 +53,33 @@ defmodule ExRets.DigestAccessAuthentication.ChallengeTest do
 
     @tag :unit
     test "handles multiple domain URIs and maintains order" do
-      challenge = """
+      challenge_1 = """
       realm="testrealm@host.com",
       nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",
       domain="/search /logout"
       """
 
-      expected_domains = [
+      expected_domains_1 = [
         URI.parse("https://example.com/search"),
         URI.parse("https://example.com/logout")
       ]
 
-      assert {:ok, %Challenge{domain: ^expected_domains}} = Challenge.parse(challenge, @login_uri)
+      assert {:ok, %Challenge{domain: ^expected_domains_1}} =
+               Challenge.parse(challenge_1, @login_uri)
 
-      challenge = """
+      challenge_2 = """
       realm="testrealm@host.com",
       nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",
       domain="/logout /search"
       """
 
-      expected_domains = [
+      expected_domains_2 = [
         URI.parse("https://example.com/logout"),
         URI.parse("https://example.com/search")
       ]
 
-      assert {:ok, %Challenge{domain: ^expected_domains}} = Challenge.parse(challenge, @login_uri)
+      assert {:ok, %Challenge{domain: ^expected_domains_2}} =
+               Challenge.parse(challenge_2, @login_uri)
     end
 
     @tag :unit
@@ -96,40 +98,40 @@ defmodule ExRets.DigestAccessAuthentication.ChallengeTest do
 
     @tag :unit
     test "handles stale when stale is true (case-insensitive)" do
-      challenge = """
+      challenge_1 = """
       realm="testrealm@host.com",
       nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",
       stale="true"
       """
 
-      assert {:ok, %Challenge{stale: true}} = Challenge.parse(challenge, @login_uri)
+      assert {:ok, %Challenge{stale: true}} = Challenge.parse(challenge_1, @login_uri)
 
-      challenge = """
+      challenge_2 = """
       realm="testrealm@host.com",
       nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",
       stale="TRUE"
       """
 
-      assert {:ok, %Challenge{stale: true}} = Challenge.parse(challenge, @login_uri)
+      assert {:ok, %Challenge{stale: true}} = Challenge.parse(challenge_2, @login_uri)
     end
 
     @tag :unit
     test "handles stale when stale is not true" do
-      challenge = """
+      challenge_1 = """
       realm="testrealm@host.com",
       nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",
       stale="false"
       """
 
-      assert {:ok, %Challenge{stale: false}} = Challenge.parse(challenge, @login_uri)
+      assert {:ok, %Challenge{stale: false}} = Challenge.parse(challenge_1, @login_uri)
 
-      challenge = """
+      challenge_2 = """
       realm="testrealm@host.com",
       nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",
       stale="anything other than true"
       """
 
-      assert {:ok, %Challenge{stale: false}} = Challenge.parse(challenge, @login_uri)
+      assert {:ok, %Challenge{stale: false}} = Challenge.parse(challenge_2, @login_uri)
     end
 
     @tag :unit
@@ -156,21 +158,21 @@ defmodule ExRets.DigestAccessAuthentication.ChallengeTest do
 
     @tag :unit
     test "maintains qop order" do
-      challenge = """
+      challenge_1 = """
       realm="testrealm@host.com",
       nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",
       qop="auth,auth-int",
       """
 
-      assert {:ok, %Challenge{qop: [:auth, :auth_int]}} = Challenge.parse(challenge, @login_uri)
+      assert {:ok, %Challenge{qop: [:auth, :auth_int]}} = Challenge.parse(challenge_1, @login_uri)
 
-      challenge = """
+      challenge_2 = """
       realm="testrealm@host.com",
       nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",
       qop="auth-int,auth",
       """
 
-      assert {:ok, %Challenge{qop: [:auth_int, :auth]}} = Challenge.parse(challenge, @login_uri)
+      assert {:ok, %Challenge{qop: [:auth_int, :auth]}} = Challenge.parse(challenge_2, @login_uri)
     end
 
     @tag :unit

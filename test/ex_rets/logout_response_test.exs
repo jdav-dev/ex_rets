@@ -53,7 +53,7 @@ defmodule ExRets.LogoutResponseTest do
       |> Enum.chunk_every(10)
       |> Enum.map(&to_string/1)
 
-    {:ok, _response, stream} = Mock.open_stream(client, request, stream: stream)
-    {:ok, stream: stream}
+    {:ok, _response, returned_stream} = Mock.open_stream(client, request, stream: stream)
+    {:ok, stream: returned_stream}
   end
 end
