@@ -4,6 +4,7 @@ defmodule ExRets.RetsResponse do
   """
   @moduledoc since: "0.1.0"
 
+  alias ExRets.BaseXmlParser
   alias ExRets.LoginResponse
   alias ExRets.LogoutResponse
   alias ExRets.SearchResponse
@@ -14,6 +15,14 @@ defmodule ExRets.RetsResponse do
           reply_code: reply_code(),
           reply_text: reply_text(),
           response: response()
+        }
+
+  @typedoc false
+  @typedoc since: "0.1.0"
+  @type t(response) :: %__MODULE__{
+          reply_code: reply_code(),
+          reply_text: reply_text(),
+          response: response
         }
 
   defstruct reply_code: 0, reply_text: nil, response: nil
@@ -38,6 +47,7 @@ defmodule ExRets.RetsResponse do
 
   @doc false
   @doc since: "0.1.0"
+  @spec read_rets_element_attributes(BaseXmlParser.attributes(), t()) :: t()
   def read_rets_element_attributes(attributes, %__MODULE__{} = rets_response) do
     Enum.reduce(attributes, rets_response, fn
       {_, _, 'ReplyCode', value}, acc ->

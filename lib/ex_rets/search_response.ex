@@ -7,6 +7,7 @@ defmodule ExRets.SearchResponse do
   alias ExRets.BaseXmlParser
   alias ExRets.CompactDelimiter
   alias ExRets.CompactRecord
+  alias ExRets.HttpClient
   alias ExRets.RetsResponse
 
   @typedoc "Records matching a search query."
@@ -28,6 +29,8 @@ defmodule ExRets.SearchResponse do
 
   @doc false
   @doc since: "0.1.0"
+  @spec parse(HttpClient.stream(), HttpClient.implementation()) ::
+          {:ok, RetsResponse.t(t())} | {:error, ExRets.reason()}
   def parse(stream, http_client_implementation) do
     event_state = %{
       characters: [],
