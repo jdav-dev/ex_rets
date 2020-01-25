@@ -90,6 +90,7 @@ defmodule ExRets.DigestAccessAuthentication.Response do
 
   @doc false
   # Accepting `cnonce` as input here for testing purposes.
+  @spec do_answer_challenge(HttpRequest.t(), Challenge.t(), Credentials.t(), cnonce()) :: t()
   def do_answer_challenge(
         %HttpRequest{} = request,
         %Challenge{} = challenge,

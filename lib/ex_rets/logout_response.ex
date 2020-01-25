@@ -5,6 +5,7 @@ defmodule ExRets.LogoutResponse do
   @moduledoc since: "0.1.0"
 
   alias ExRets.BaseXmlParser
+  alias ExRets.HttpClient
   alias ExRets.RetsResponse
 
   @typedoc "Parsed server response from a logout transaction."
@@ -13,6 +14,8 @@ defmodule ExRets.LogoutResponse do
 
   @doc false
   @doc since: "0.1.0"
+  @spec parse(HttpClient.stream(), HttpClient.implementation()) ::
+          {:ok, RetsResponse.t(t())} | {:error, ExRets.reason()}
   def parse(stream, http_client_implementation) do
     event_state = %{
       characters: [],

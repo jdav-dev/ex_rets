@@ -2,6 +2,8 @@ defmodule ExRets.HttpRequest do
   @moduledoc false
   @moduledoc since: "0.1.0"
 
+  alias ExRets.HttpClient.Httpc
+
   @enforce_keys [:uri]
   defstruct method: :get, uri: nil, headers: [], body: nil
 
@@ -13,6 +15,7 @@ defmodule ExRets.HttpRequest do
         }
 
   @doc false
+  @spec to_httpc(t()) :: Httpc.request()
   def to_httpc(%__MODULE__{} = request) do
     uri = request.uri |> to_string() |> to_charlist()
     headers = Enum.map(request.headers, fn {k, v} -> {to_charlist(k), to_charlist(v)} end)

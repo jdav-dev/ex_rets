@@ -12,6 +12,45 @@ defmodule ExRets.HttpClient.Httpc do
 
   @default_http_opts [ssl: [ciphers: :ssl.cipher_suites(:all, :"tlsv1.2")]]
 
+  @typedoc since: "0.1.0"
+  @type url :: charlist()
+
+  @typedoc since: "0.1.0"
+  @type field :: charlist()
+
+  @typedoc since: "0.1.0"
+  @type value :: charlist()
+
+  @typedoc since: "0.1.0"
+  @type header :: {field(), value()}
+
+  @typedoc since: "0.1.0"
+  @type headers :: [header()]
+
+  @typedoc since: "0.1.0"
+  @type content_type :: charlist()
+
+  @typedoc since: "0.1.0"
+  @type body :: String.t() | charlist()
+
+  @typedoc since: "0.1.0"
+  @type request :: {url(), headers()} | {url(), headers(), content_type(), body()}
+
+  @typedoc since: "0.1.0"
+  @type http_version() :: charlist()
+
+  @typedoc since: "0.1.0"
+  @type status_code :: integer()
+
+  @typedoc since: "0.1.0"
+  @type reason_phrase :: charlist()
+
+  @typedoc since: "0.1.0"
+  @type status_line :: {http_version(), status_code(), reason_phrase()}
+
+  @typedoc since: "0.1.0"
+  @type result :: {status_line(), headers(), body()}
+
   # Interface
 
   @impl HttpClient

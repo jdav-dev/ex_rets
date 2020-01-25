@@ -9,6 +9,7 @@ defmodule ExRets.LoginResponse do
 
   alias ExRets.BaseXmlParser
   alias ExRets.CapabilityUris
+  alias ExRets.HttpClient
   alias ExRets.RetsResponse
   alias ExRets.SessionInformation
 
@@ -27,6 +28,8 @@ defmodule ExRets.LoginResponse do
 
   @doc false
   @doc since: "0.1.0"
+  @spec parse(HttpClient.stream(), URI.t(), HttpClient.implementation()) ::
+          {:ok, RetsResponse.t(t())} | {:error, ExRets.reason()}
   def parse(stream, login_uri, http_client_implementation) do
     event_state = %{
       characters: [],
