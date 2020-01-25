@@ -27,13 +27,17 @@ defmodule ExRets.HttpClient do
   @type headers :: [header()]
 
   @typedoc since: "0.1.0"
-  @type implementation :: atom()
+  @type implementation :: module()
 
   @callback start_client(name(), opts()) :: {:ok, client()} | {:error, ExRets.reason()}
   @callback open_stream(client(), HttpRequest.t()) ::
-              {:ok, HttpResponse.t(), stream()} | {:error, ExRets.reason()}
+              {:ok, HttpResponse.t(), stream()}
+              | {:ok, HttpResponse.t()}
+              | {:error, ExRets.reason()}
   @callback open_stream(client(), HttpRequest.t(), opts()) ::
-              {:ok, HttpResponse.t(), stream()} | {:error, ExRets.reason()}
+              {:ok, HttpResponse.t(), stream()}
+              | {:ok, HttpResponse.t()}
+              | {:error, ExRets.reason()}
   @callback stream_next(stream()) :: {:ok, stream_part(), stream()} | {:error, ExRets.reason()}
   @callback close_stream(stream()) :: :ok
   @callback stop_client(client()) :: :ok

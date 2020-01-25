@@ -20,7 +20,7 @@ defmodule ExRets.CapabilityUris do
     :get_payload_list
   ]
 
-  @typedoc "URIs used to issue RETS requests."
+  @typedoc "URIs for issuing RETS requests."
   @typedoc since: "0.1.0"
   @type t :: %__MODULE__{
           action: URI.t() | nil,

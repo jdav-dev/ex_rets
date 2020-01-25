@@ -20,6 +20,8 @@ defmodule ExRets.HttpClient.Mock do
 
   @impl HttpClient
   @doc since: "0.1.0"
+  @spec open_stream(HttpClient.client(), ExRets.HttpRequest.t(), keyword) ::
+          {:ok, HttpResponse.t()} | {:ok, HttpResponse.t(), HttpClient.stream()}
   def open_stream(%__MODULE__{response: response, stream: stream}, %HttpRequest{}, opts \\ [])
       when is_list(opts) do
     response = Keyword.get(opts, :response, response)

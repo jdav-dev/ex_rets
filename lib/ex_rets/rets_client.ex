@@ -4,13 +4,8 @@ defmodule ExRets.RetsClient do
 
   alias ExRets.Credentials
   alias ExRets.HttpClient
-  alias ExRets.HttpRequest
-  alias ExRets.HttpResponse
   alias ExRets.LoginResponse
-
-  @typedoc since: "0.1.0"
-  @type middleware ::
-          (HttpRequest.t(), next :: middleware() -> {:ok, HttpResponse.t()} | {:error, any()})
+  alias ExRets.Middleware
 
   @typedoc since: "0.1.0"
   @opaque t :: %__MODULE__{
@@ -19,7 +14,7 @@ defmodule ExRets.RetsClient do
             http_client_implementation: Httpc | Mock,
             http_timeout: non_neg_integer() | :infinity,
             login_response: LoginResponse.t(),
-            middleware: [middleware()]
+            middleware: [Middleware.t()]
           }
 
   @derive {Inspect, only: [:credentials]}
