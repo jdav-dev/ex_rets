@@ -8,7 +8,7 @@ defmodule ExRets.Middleware.DefaultHeaders do
 
   @behaviour Middleware
 
-  @project_version Mix.Project.config() |> Keyword.fetch!(:version)
+  @project_version Keyword.fetch!(Mix.Project.config(), :version)
   @default_user_agent "ExRets/#{@project_version}"
 
   @impl Middleware
@@ -25,7 +25,7 @@ defmodule ExRets.Middleware.DefaultHeaders do
   @doc since: "0.1.0"
   def call(%HttpRequest{headers: headers} = request, next, default_headers)
       when is_list(default_headers) do
-    %HttpRequest{request | headers: default_headers ++ headers}
-    |> next.()
+    request = %HttpRequest{request | headers: default_headers ++ headers}
+    next.(request)
   end
 end

@@ -96,21 +96,21 @@ defmodule ExRets.DigestAccessAuthentication.Response do
         %Credentials{} = credentials,
         cnonce
       ) do
-    response =
-      %__MODULE__{
-        username: credentials.username,
-        realm: challenge.realm,
-        nonce: challenge.nonce,
-        uri: request.uri,
-        algorithm: challenge.algorithm,
-        cnonce: cnonce,
-        opaque: challenge.opaque
-      }
-      |> pick_qop(challenge)
+    response = %__MODULE__{
+      username: credentials.username,
+      realm: challenge.realm,
+      nonce: challenge.nonce,
+      uri: request.uri,
+      algorithm: challenge.algorithm,
+      cnonce: cnonce,
+      opaque: challenge.opaque
+    }
 
-    ha1 = create_ha1(response, credentials.password)
-    ha2 = create_ha2(request, response)
-    set_response(response, ha1, ha2)
+    response_with_qop = pick_qop(response, challenge)
+
+    ha1 = create_ha1(response_with_qop, credentials.password)
+    ha2 = create_ha2(request, response_with_qop)
+    set_response(response_with_qop, ha1, ha2)
   end
 
   defp pick_qop(response, %Challenge{qop: qop}) do
