@@ -35,4 +35,21 @@ defmodule ExRets.RetsResponse do
   @typedoc "Main content of the RETS response."
   @typedoc since: "0.1.0"
   @type response :: LoginResponse.t() | LogoutResponse.t() | SearchResponse.t()
+
+  @doc false
+  @doc since: "0.1.0"
+  def read_rets_element_attributes(attributes, %__MODULE__{} = rets_response) do
+    Enum.reduce(attributes, rets_response, fn
+      {_, _, 'ReplyCode', value}, acc ->
+        reply_code = value |> to_string() |> String.to_integer()
+        put_in(acc.reply_code, reply_code)
+
+      {_, _, 'ReplyText', value}, acc ->
+        reply_text = to_string(value)
+        put_in(acc.reply_text, reply_text)
+
+      _, acc ->
+        acc
+    end)
+  end
 end

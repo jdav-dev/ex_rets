@@ -41,18 +41,10 @@ defmodule ExRets.LoginResponse do
   end
 
   defp event_fun({:startElement, _, 'RETS', _, attributes}, _, state) do
-    Enum.reduce(attributes, state, fn
-      {_, _, 'ReplyCode', value}, acc ->
-        reply_code = value |> to_string() |> String.to_integer()
-        put_in(acc.rets_response.reply_code, reply_code)
+    updated_rets_response =
+      RetsResponse.read_rets_element_attributes(attributes, state.rets_response)
 
-      {_, _, 'ReplyText', value}, acc ->
-        reply_text = to_string(value)
-        put_in(acc.rets_response.reply_text, reply_text)
-
-      _, acc ->
-        acc
-    end)
+    %{state | rets_response: updated_rets_response}
   end
 
   defp event_fun({:startElement, _, _name, _, _attributes}, _, state) do
