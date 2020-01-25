@@ -113,14 +113,16 @@ defmodule ExRets.HttpClient.HttpcTest do
   end
 
   defp stream_recursive(stream) when is_pid(stream) do
-    Httpc.stream_next(stream)
+    stream
+    |> Httpc.stream_next()
     |> stream_recursive()
   end
 
   defp stream_recursive({:ok, "", _stream} = result), do: result
 
   defp stream_recursive({:ok, _next, stream}) do
-    Httpc.stream_next(stream)
+    stream
+    |> Httpc.stream_next()
     |> stream_recursive()
   end
 
