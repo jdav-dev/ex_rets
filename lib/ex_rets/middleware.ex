@@ -2,21 +2,33 @@ defmodule ExRets.Middleware do
   @moduledoc false
   @moduledoc since: "0.1.0"
 
-  alias ExRets.RetsClient
   alias ExRets.HttpClient
   alias ExRets.HttpRequest
   alias ExRets.HttpResponse
+  alias ExRets.RetsClient
 
+  @typedoc since: "0.1.0"
   @type opts :: any()
+
+  @typedoc since: "0.1.0"
+  @type t :: module() | {module(), opts()}
+
+  @typedoc since: "0.1.0"
   @type next ::
           (HttpRequest.t() ->
-             {:ok, HttpResponse.t()}
-             | {:ok, HttpResponse.t(), HttpClient.stream()}
+             {:ok, HttpResponse.t(), HttpClient.stream()}
+             | {:ok, HttpResponse.t()}
              | {:error, ExRets.reason()})
 
   @callback init(opts()) :: opts()
   @callback call(HttpRequest.t(), next(), opts()) :: HttpResponse.t()
 
+  @doc since: "0.1.0"
+  @dialyzer {:no_contracts, open_stream: 2}
+  @spec open_stream(RetsClient.t(), HttpRequest.t()) ::
+          {:ok, HttpResponse.t(), HttpClient.stream()}
+          | {:ok, HttpResponse.t()}
+          | {:error, ExRets.reason()}
   def open_stream(
         %RetsClient{
           http_client: http_client,

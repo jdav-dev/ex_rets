@@ -71,6 +71,10 @@ defmodule ExRets.HttpClient.Httpc do
 
   @impl HttpClient
   @doc since: "0.1.0"
+  @spec open_stream(pid, ExRets.HttpRequest.t(), maybe_improper_list) ::
+          {:ok, HttpResponse.t(), HttpClient.stream()}
+          | {:ok, HttpResponse.t()}
+          | {:error, ExRets.reason()}
   def open_stream(client, %HttpRequest{} = request, http_opts \\ [])
       when is_pid(client) and is_list(http_opts) do
     with true <- Process.alive?(client),

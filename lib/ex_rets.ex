@@ -84,6 +84,7 @@ defmodule ExRets do
 
   @doc "Logout and close the HTTP client."
   @doc since: "0.1.0"
+  @dialyzer {:no_contracts, logout: 1}
   @spec logout(RetsClient.t()) ::
           {:ok, RetsResponse.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def logout(%RetsClient{} = rets_client) do
@@ -108,6 +109,7 @@ defmodule ExRets do
 
   @doc "Perform a RETS search."
   @doc since: "0.1.0"
+  @dialyzer {:no_contracts, search: 2}
   @spec search(RetsClient.t(), SearchArguments.t()) ::
           {:ok, RetsResponse.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def search(
