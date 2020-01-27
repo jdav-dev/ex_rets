@@ -25,16 +25,27 @@ defmodule ExRets do
 
   @typedoc "Options for the RETS client."
   @typedoc since: "0.1.0"
-  @type opts :: keyword()
+  @type opts :: [timeout: integer()]
 
   @typedoc "Details about why an error occurred."
   @typedoc since: "0.1.0"
   @type reason :: any()
 
-  @doc "Open an HTTP client and log in to a RETS server."
+  @doc """
+  Open an HTTP client and log in to a RETS server.
+
+  Returns an `:ok` tuple with either a `t:client/0` if the login succeeds, or an
+  `t:ExRets.HttpResponse.t/0` if the login attempt ends with a non-200 status code.
+
+  An `:error` tuple is returned for any other issues.
+
+  ## Options
+
+    * `:timeout` - HTTP timeout in seconds, applied to each HTTP request by the client.
+  """
   @doc since: "0.1.0"
   @spec login(Credentials.t(), opts()) ::
-          {:ok, RetsClient.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
+          {:ok, client()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def login(%Credentials{} = credentials, opts \\ []) do
     with {:ok, rets_client} <- new_rets_client(credentials, opts) do
       rets_client
@@ -82,10 +93,17 @@ defmodule ExRets do
     end
   end
 
-  @doc "Logout and close the HTTP client."
+  @doc """
+  Logout and close the HTTP client.
+
+  Returns an `:ok` tuple with either a `t:ExRets.RetsResponse.t/0` if the logout succeeds, or an
+  `t:ExRets.HttpResponse.t/0` if the logout ends with a non-200 status code.
+
+  An `:error` tuple is returned for any other issues.
+  """
   @doc since: "0.1.0"
   @dialyzer {:no_contracts, logout: 1}
-  @spec logout(RetsClient.t()) ::
+  @spec logout(client()) ::
           {:ok, RetsResponse.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def logout(%RetsClient{} = rets_client) do
     rets_client
@@ -107,10 +125,17 @@ defmodule ExRets do
     end
   end
 
-  @doc "Perform a RETS search."
+  @doc """
+  Perform a RETS search.
+
+  Returns an `:ok` tuple with either a `t:ExRets.RetsResponse.t/0` if the search succeeds, or an
+  `t:ExRets.HttpResponse.t/0` if the search ends with a non-200 status code.
+
+  An `:error` tuple is returned for any other issues.
+  """
   @doc since: "0.1.0"
   @dialyzer {:no_contracts, search: 2}
-  @spec search(RetsClient.t(), SearchArguments.t()) ::
+  @spec search(client(), SearchArguments.t()) ::
           {:ok, RetsResponse.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def search(
         %RetsClient{
