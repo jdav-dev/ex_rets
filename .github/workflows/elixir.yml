@@ -3,32 +3,52 @@ name: Elixir CI
 on: push
 
 jobs:
-  build:
-
+  compile:
     runs-on: ubuntu-latest
-
     container:
-      image: elixir:1.9.1-slim
-
+      image: elixir:1.9.4-slim
+    env:
+      MIX_ENV: dev
     steps:
-    - uses: actions/checkout@v1
-    - name: Cache
-      uses: actions/cache@v1.1.0
-      with:
-        path: _build
-        key: ${{ runner.os }}-elixir-${{ hashFiles('**/mix.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-elixir-
-    - name: Install dependencies
-      run: |
-        mix local.rebar --force
-        mix local.hex --force
-        mix deps.get
-    - name: Test
-      run: mix test --cover --trace
-    - name: Formatted?
-      run: mix format --check-formatted --dry-run
-    - name: Credo
-      run: mix credo --verbose
-    - name: Dialyzer
-      run: mix dialyzer --halt-exit-status
+      - uses: actions/checkout@v1
+      - name: compile
+        run: mix compile --force
+
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: elixir:1.9.4-slim
+    env:
+      MIX_ENV: test
+    steps:
+      - uses: actions/checkout@v1
+      - name: test
+        run: mix test --cover --trace
+      - name: archive code coverage
+        uses: actions/upload-artifact@v1
+        with:
+          name: code-coverage
+          path: cover
+
+  static code analysis:
+    runs-on: ubuntu-latest
+    container:
+      image: elixir:1.9.4-slim
+    env:
+      MIX_ENV: dev
+    steps:
+      - name: plt cache
+        uses: actions/cache@v1.1.0
+        with:
+          path: _build
+          key: ${{ runner.os }}-plt-${{ env.GITHUB_REF }}
+          restore-keys: |
+            ${{ runner.os }}-plt-
+      - name: formatted?
+        run: mix format --check-formatted --dry-run
+      - name: credo
+        run: mix credo --verbose
+      - name: dialyzer
+        run: mix dialyzer --halt-exit-status
+
+
