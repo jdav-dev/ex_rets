@@ -8,14 +8,14 @@ jobs:
     container:
       image: elixir:1.9.4-slim
     env:
-      MIX_ENV: dev
+      MIX_ENV: prod
     steps:
       - uses: actions/checkout@v1
       - name: install dependencies
         run: |
           mix local.rebar --force
           mix local.hex --force
-          mix deps.get
+          mix deps.get --only prod
       - name: compile
         run: mix compile --force
 
@@ -31,13 +31,13 @@ jobs:
         run: |
           mix local.rebar --force
           mix local.hex --force
-          mix deps.get
+          mix deps.get --only test
       - name: test
         run: mix test --cover --trace
       - name: archive code coverage
         uses: actions/upload-artifact@v1
         with:
-          name: code-coverage
+          name: cover
           path: cover
 
   static_code_analysis:
@@ -52,7 +52,7 @@ jobs:
         run: |
           mix local.rebar --force
           mix local.hex --force
-          mix deps.get
+          mix deps.get --only dev
       - name: plt cache
         uses: actions/cache@v1.1.0
         with:
@@ -66,5 +66,3 @@ jobs:
         run: mix credo --verbose
       - name: dialyzer
         run: mix dialyzer --halt-exit-status
-
-
