@@ -2,9 +2,9 @@ defmodule ExRets.Middleware.LoginTest do
   use ExUnit.Case, async: true
 
   alias ExRets.Credentials
-  alias ExRets.Middleware.Login
   alias ExRets.HttpRequest
   alias ExRets.HttpResponse
+  alias ExRets.Middleware.Login
 
   @login_uri URI.parse("https://example.com/login")
   @search_uri URI.parse("https://example.com/search")

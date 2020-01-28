@@ -1,9 +1,9 @@
 defmodule ExRets.BaseXmlParserTest do
   use ExUnit.Case, async: true
 
+  alias ExRets.BaseXmlParser
   alias ExRets.HttpClient.Mock
   alias ExRets.HttpRequest
-  alias ExRets.BaseXmlParser
 
   doctest BaseXmlParser
 
