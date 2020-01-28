@@ -30,7 +30,7 @@ jobs:
           name: code-coverage
           path: cover
 
-  static code analysis:
+  static_code_analysis:
     runs-on: ubuntu-latest
     container:
       image: elixir:1.9.4-slim
