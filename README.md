@@ -1,6 +1,6 @@
 # ExRets
 
-![CI badge](https://github.com/jdavis92/ex_rets/workflows/Elixir%20CI/badge.svg)
+![Elixir CI](https://github.com/jdavis92/ex_rets/workflows/Elixir%20CI/badge.svg)
 
 RETS client for Elixir.
 
