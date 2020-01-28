@@ -7,7 +7,7 @@ defmodule ExRets.MixProject do
     [
       app: :ex_rets,
       version: @version,
-      elixir: "~> 1.10",
+      elixir: "~> 1.9",
       name: "ExRets",
       description: "RETS client for Elixir.",
       start_permanent: Mix.env() == :prod,

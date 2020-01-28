@@ -241,11 +241,11 @@ defmodule ExRets.DigestAccessAuthentication.Response do
 
   defp maybe_add_qop_fields(response_list, %__MODULE__{cnonce: cnonce, qop: qop, nc: nc}) do
     if qop do
-      qop_fields = ~w(
-          nc=#{format_nonce_count(nc)}
-          qop="#{qop_value_to_string(qop)}"
-          cnonce="#{cnonce}"
-        )
+      qop_fields = [
+        "nc=#{format_nonce_count(nc)}",
+        ~s/qop="#{qop_value_to_string(qop)}"/,
+        ~s/cnonce="#{cnonce}"/
+      ]
 
       qop_fields ++ response_list
     else

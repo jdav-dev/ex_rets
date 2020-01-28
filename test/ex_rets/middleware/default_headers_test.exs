@@ -2,9 +2,9 @@ defmodule ExRets.Middleware.DefaultHeadersTest do
   use ExUnit.Case, async: true
 
   alias ExRets.Credentials
-  alias ExRets.Middleware.DefaultHeaders
   alias ExRets.HttpRequest
   alias ExRets.HttpResponse
+  alias ExRets.Middleware.DefaultHeaders
 
   @login_uri URI.parse("https://example.com/login")
 
