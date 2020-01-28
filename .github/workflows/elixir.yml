@@ -11,6 +11,11 @@ jobs:
       MIX_ENV: dev
     steps:
       - uses: actions/checkout@v1
+      - name: install dependencies
+        run: |
+          mix local.rebar --force
+          mix local.hex --force
+          mix deps.get
       - name: compile
         run: mix compile --force
 
@@ -22,6 +27,11 @@ jobs:
       MIX_ENV: test
     steps:
       - uses: actions/checkout@v1
+      - name: install dependencies
+        run: |
+          mix local.rebar --force
+          mix local.hex --force
+          mix deps.get
       - name: test
         run: mix test --cover --trace
       - name: archive code coverage
@@ -37,6 +47,12 @@ jobs:
     env:
       MIX_ENV: dev
     steps:
+      - uses: actions/checkout@v1
+      - name: install dependencies
+        run: |
+          mix local.rebar --force
+          mix local.hex --force
+          mix deps.get
       - name: plt cache
         uses: actions/cache@v1.1.0
         with:
