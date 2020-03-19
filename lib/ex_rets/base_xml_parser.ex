@@ -133,7 +133,9 @@ defmodule ExRets.BaseXmlParser do
     Keyword.put(opts, :continuation_state, continuation_state)
   end
 
-  defp format_xmerl_result({:ok, event_state, _rest}), do: {:ok, event_state}
+  defp format_xmerl_result({:ok, event_state, _rest}) do
+    {:ok, event_state}
+  end
 
   defp format_xmerl_result({:fatal_error, _location, reason, _end_tags, _event_state}) do
     case reason do
@@ -141,5 +143,9 @@ defmodule ExRets.BaseXmlParser do
       reason when is_list(reason) -> {:error, to_string(reason)}
       reason when is_binary(reason) -> {:error, reason}
     end
+  end
+
+  defp format_xmerl_result({:fatal_error, %RuntimeError{message: message}}) do
+    {:error, message}
   end
 end
