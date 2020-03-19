@@ -111,6 +111,32 @@ defmodule ExRets.LoginResponseTest do
       stream = ["<broken>xml"]
       assert {:error, "No more bytes"} = LoginResponse.parse(stream, @login_uri, Mock)
     end
+
+    @tag :integration
+    test "returns error if the XML contains entity expansion" do
+      # https://en.wikipedia.org/wiki/Billion_laughs_attack
+      billion_laughs = [
+        """
+        <?xml version="1.0"?>
+        <!DOCTYPE lolz [
+        <!ENTITY lol "lol">
+        <!ELEMENT lolz (#PCDATA)>
+        <!ENTITY lol1 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+        <!ENTITY lol2 "&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;">
+        <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
+        <!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;">
+        <!ENTITY lol5 "&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;">
+        <!ENTITY lol6 "&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;">
+        <!ENTITY lol7 "&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;">
+        <!ENTITY lol8 "&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;">
+        <!ENTITY lol9 "&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;">
+        ]>
+        <lolz>&lol9;</lolz>
+        """
+      ]
+
+      assert {:error, "Entity expansion"} = LoginResponse.parse(billion_laughs, @login_uri, Mock)
+    end
   end
 
   defp open_stream(_) do

@@ -112,5 +112,9 @@ defmodule ExRets.SearchResponse do
     put_in(state.rets_response.response.rows, [row | state.rets_response.response.rows])
   end
 
+  # https://erlef.github.io/security-wg/secure_coding_and_deployment_hardening/xmerl
+  defp event_fun({:internalEntityDecl, _, _}, _, _), do: raise("Entity expansion")
+  defp event_fun({:externalEntityDecl, _, _, _}, _, _), do: raise("Entity expansion")
+
   defp event_fun(_event, _, state), do: state
 end
