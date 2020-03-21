@@ -8,11 +8,13 @@ defmodule ExRets do
 
   alias ExRets.CapabilityUris
   alias ExRets.Credentials
+  alias ExRets.GetMetadataArguments
   alias ExRets.HttpClient.Httpc
   alias ExRets.HttpRequest
   alias ExRets.HttpResponse
   alias ExRets.LoginResponse
   alias ExRets.LogoutResponse
+  alias ExRets.Metadata
   alias ExRets.Middleware
   alias ExRets.RetsClient
   alias ExRets.RetsResponse
@@ -125,6 +127,31 @@ defmodule ExRets do
     end
   end
 
+  def get_metadata(%RetsClient{} = rets_client, %GetMetadataArguments{} = get_metadata_arguments) do
+    rets_client
+    |> get_metadata_fun(get_metadata_arguments)
+    |> Task.async()
+    |> Task.await(:infinity)
+  end
+
+  defp get_metadata_fun(rets_client, get_metadata_arguments) do
+    fn ->
+      query = GetMetadataArguments.encode_query(get_metadata_arguments)
+
+      get_metadata_uri = %URI{
+        rets_client.login_response.capability_uris.get_metadata
+        | query: query
+      }
+
+      request = %HttpRequest{uri: get_metadata_uri}
+      http_client_implementation = rets_client.http_client_implementation
+
+      with {:ok, _response, stream} <- Middleware.open_stream(rets_client, request) do
+        Metadata.parse(stream, http_client_implementation)
+      end
+    end
+  end
+
   @doc """
   Perform a RETS search.
 
@@ -151,7 +178,7 @@ defmodule ExRets do
     |> Task.await(:infinity)
   end
 
-  defp search_fun(%RetsClient{} = rets_client, search_arguments) do
+  defp search_fun(rets_client, search_arguments) do
     fn ->
       search_uri = rets_client.login_response.capability_uris.search
       body = SearchArguments.encode_query(search_arguments)

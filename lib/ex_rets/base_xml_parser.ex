@@ -102,9 +102,16 @@ defmodule ExRets.BaseXmlParser do
   @spec parse(HttpClient.stream(), event_fun(), state(), HttpClient.implementation()) ::
           {:ok, state()} | {:error, ExRets.reason()}
   def parse(stream, event_fun, event_state, http_client_implementation) do
+    event_fun_without_entity_expansion = fn
+      # https://erlef.github.io/security-wg/secure_coding_and_deployment_hardening/xmerl
+      {:internalEntityDecl, _, _}, _, _ -> raise("Entity expansion")
+      {:externalEntityDecl, _, _, _}, _, _ -> raise("Entity expansion")
+      event, location, state -> event_fun.(event, location, state)
+    end
+
     opts = [
       continuation_fun: &continuation_fun/1,
-      event_fun: event_fun,
+      event_fun: event_fun_without_entity_expansion,
       event_state: event_state
     ]
 

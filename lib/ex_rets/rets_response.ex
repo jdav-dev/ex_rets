@@ -8,6 +8,9 @@ defmodule ExRets.RetsResponse do
   alias ExRets.LoginResponse
   alias ExRets.LogoutResponse
   alias ExRets.SearchResponse
+  alias ExRets.XmlParser
+
+  @behaviour XmlParser
 
   @typedoc "Parsed response of a RETS request."
   @typedoc since: "0.1.0"
@@ -46,6 +49,19 @@ defmodule ExRets.RetsResponse do
   @type response :: LoginResponse.t() | LogoutResponse.t() | SearchResponse.t()
 
   @doc false
+  @doc since: "0.2.0"
+  def xmerl_event_fun(next) do
+    fn
+      {:startElement, _, 'RETS', _, attributes}, _, state ->
+        updated_rets_response = read_rets_element_attributes(attributes, state.rets_response)
+        %{state | rets_response: updated_rets_response}
+
+      event, location, state ->
+        next.(event, location, state)
+    end
+  end
+
+  @doc false
   @doc since: "0.1.0"
   @spec read_rets_element_attributes(BaseXmlParser.attributes(), t()) :: t()
   def read_rets_element_attributes(attributes, %__MODULE__{} = rets_response) do
@@ -55,6 +71,29 @@ defmodule ExRets.RetsResponse do
         put_in(acc.reply_code, reply_code)
 
       {_, _, 'ReplyText', value}, acc ->
+        reply_text = to_string(value)
+        put_in(acc.reply_text, reply_text)
+
+      _, acc ->
+        acc
+    end)
+  end
+
+  @impl XmlParser
+  def start_element("RETS", attributes) do
+    rets_response = parse_attributes(attributes)
+    {:ok, rets_response}
+  end
+
+  def start_element(_, _), do: :skip
+
+  defp parse_attributes(attributes) do
+    Enum.reduce(attributes, %__MODULE__{}, fn
+      {"ReplyCode", value}, acc ->
+        reply_code = value |> to_string() |> String.to_integer()
+        put_in(acc.reply_code, reply_code)
+
+      {"ReplyText", value}, acc ->
         reply_text = to_string(value)
         put_in(acc.reply_text, reply_text)
 
