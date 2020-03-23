@@ -1,18 +1,12 @@
 defmodule ExRets.Metadata do
   @moduledoc since: "0.2.0"
 
-  alias ExRets.BaseXmlParser
-  alias ExRets.CompactDelimiter
-  alias ExRets.CompactRecord
-  alias ExRets.HttpClient
+  use ExRets.Xml
+
   alias ExRets.Metadata.Filter
   alias ExRets.Metadata.ForeignKey
   alias ExRets.Metadata.Resource
-  alias ExRets.Metadata.Resource.Class
   alias ExRets.RetsResponse
-  alias ExRets.XmlParser
-
-  @behaviour XmlParser
 
   defstruct version: nil,
             date: nil,
@@ -114,226 +108,150 @@ defmodule ExRets.Metadata do
   @typedoc since: "0.2.0"
   @type filter_date :: NaiveDateTime.t()
 
-  @doc since: "0.2.0"
-  def parse(stream, http_client_implementation) do
-    event_state = %{
-      characters: [],
-      delimiter: "\t",
-      element: nil,
-      rets_response: %RetsResponse{response: %__MODULE__{}}
-    }
+  def schema do
+    root "RETS", %RetsResponse{} do
+      attribute "ReplyCode", :reply_code, transform: &parse_integer/1
+      attribute "ReplyText", :reply_text, transform: &empty_string_to_nil/1
 
-    event_fun_chain = RetsResponse.xmerl_event_fun(&event_fun/3)
+      element "METADATA" do
+        element "METADATA-SYSTEM", :response, %__MODULE__{} do
+          attribute "Version", :version, transform: &empty_string_to_nil/1
+          attribute "Date", :date, transform: &parse_naive_date_time/1
 
-    with {:ok, %{rets_response: rets_response}} <-
-           BaseXmlParser.parse(stream, event_fun_chain, event_state, http_client_implementation) do
-      metadata = rets_response.response
-      metadata = %__MODULE__{metadata | resources: Enum.reverse(metadata.resources)}
-      rets_response = %RetsResponse{rets_response | response: metadata}
-      {:ok, rets_response}
+          element "SYSTEM" do
+            attribute "SystemID", :system_id, transform: &empty_string_to_nil/1
+
+            attribute "SystemDescription", :system_description,
+              transform: &parse_naive_date_time/1
+
+            attribute "TimeZoneOffset", :time_zone_offset, transform: &empty_string_to_nil/1
+            attribute "MetadataID", :metadata_id, transform: &empty_string_to_nil/1
+
+            element "COMMENTS" do
+              text :comments, transform: &empty_string_to_nil/1
+            end
+
+            element "ResourceVersion" do
+              text :resource_version, transform: &empty_string_to_nil/1
+            end
+
+            element "ResourceDate" do
+              text :resource_date, transform: &parse_naive_date_time/1
+            end
+
+            element "METADATA-RESOURCE" do
+              attribute "Version", :resource_version, transform: &empty_string_to_nil/1
+              attribute "Date", :resource_date, transform: &parse_naive_date_time/1
+
+              element "Resource", :resources, %Resource{}, list: true do
+                element "ResourceID" do
+                  text :resource_id, transform: &empty_string_to_nil/1
+                end
+
+                element "StandardName" do
+                  text :standard_name, transform: &empty_string_to_nil/1
+                end
+
+                element "VisibleName" do
+                  text :visible_name, transform: &empty_string_to_nil/1
+                end
+
+                element "Description" do
+                  text :description, transform: &empty_string_to_nil/1
+                end
+
+                element "KeyField" do
+                  text :key_field, transform: &empty_string_to_nil/1
+                end
+
+                element "ClassCount" do
+                  text :class_count, transform: &parse_integer/1
+                end
+
+                element "ClassVersion" do
+                  text :class_version, transform: &empty_string_to_nil/1
+                end
+
+                element "ClassDate" do
+                  text :class_date, transform: &parse_naive_date_time/1
+                end
+
+                element "ObjectVersion" do
+                  text :object_version, transform: &empty_string_to_nil/1
+                end
+
+                element "ObjectDate" do
+                  text :object_date, transform: &parse_naive_date_time/1
+                end
+
+                element "SearchHelpVersion" do
+                  text :search_help_version, transform: &empty_string_to_nil/1
+                end
+
+                element "SearchHelpDate" do
+                  text :search_help_date, transform: &parse_naive_date_time/1
+                end
+
+                element "EditMaskVersion" do
+                  text :edit_mask_version, transform: &empty_string_to_nil/1
+                end
+
+                element "EditMaskDate" do
+                  text :edit_mask_date, transform: &parse_naive_date_time/1
+                end
+
+                element "LookupVersion" do
+                  text :lookup_version, transform: &empty_string_to_nil/1
+                end
+
+                element "LookupDate" do
+                  text :lookup_date, transform: &parse_naive_date_time/1
+                end
+
+                element "UpdateHelpVersion" do
+                  text :update_help_version, transform: &empty_string_to_nil/1
+                end
+
+                element "UpdateHelpDate" do
+                  text :update_help_date, transform: &parse_naive_date_time/1
+                end
+
+                element "ValidationExpressionVersion" do
+                  text :class_version, transform: &empty_string_to_nil/1
+                end
+
+                element "ValidationExpressionDate" do
+                  text :class_date, transform: &parse_naive_date_time/1
+                end
+
+                element "ValidationExternalVersion" do
+                  text :class_version, transform: &empty_string_to_nil/1
+                end
+
+                element "ValidationExternalDate" do
+                  text :class_date, transform: &parse_naive_date_time/1
+                end
+              end
+            end
+
+            element "ForeignKeyVersion" do
+              text :foreign_key_version, transform: &empty_string_to_nil/1
+            end
+
+            element "ForeignKeyDate" do
+              text :foreign_key_date, transform: &parse_naive_date_time/1
+            end
+
+            element "FilterVersion" do
+              text :filter_version, transform: &empty_string_to_nil/1
+            end
+
+            element "FilterDate" do
+              text :filter_date, transform: &parse_naive_date_time/1
+            end
+          end
+        end
+      end
     end
-  end
-
-  # defp xmerl_event_fun(next) do
-  # end
-
-  defp event_fun({:startElement, _, 'METADATA-SYSTEM', _, attributes}, _, state) do
-    Enum.reduce(attributes, state, fn
-      {_, _, 'Version', value}, acc ->
-        version = to_string(value)
-        put_in(acc.rets_response.response.version, version)
-
-      {_, _, 'Date', value}, acc ->
-        date =
-          case value |> to_string() |> NaiveDateTime.from_iso8601() do
-            {:ok, datetime} -> datetime
-            _ -> value
-          end
-
-        put_in(acc.rets_response.response.date, date)
-
-      _, acc ->
-        acc
-    end)
-  end
-
-  defp event_fun({:startElement, _, 'SYSTEM', _, attributes}, _, state) do
-    Enum.reduce(attributes, state, fn
-      {_, _, 'SystemID', value}, acc ->
-        system_id = to_string(value)
-        put_in(acc.rets_response.response.system_id, system_id)
-
-      {_, _, 'SystemDescription', value}, acc ->
-        system_description = to_string(value)
-        put_in(acc.rets_response.response.system_description, system_description)
-
-      {_, _, 'TimeZoneOffset', value}, acc ->
-        time_zone_offset = to_string(value)
-        put_in(acc.rets_response.response.time_zone_offset, time_zone_offset)
-
-      {_, _, 'MetadataID', value}, acc ->
-        metadata_id = to_string(value)
-        put_in(acc.rets_response.response.metadata_id, metadata_id)
-
-      _, acc ->
-        acc
-    end)
-  end
-
-  defp event_fun({:startElement, _, 'METADATA-RESOURCE', _, attributes}, _, state) do
-    Enum.reduce(attributes, state, fn
-      {_, _, 'Version', value}, acc ->
-        resource_version = to_string(value)
-        put_in(acc.rets_response.response.resource_version, resource_version)
-
-      {_, _, 'Date', value}, acc ->
-        resource_date =
-          case value |> to_string() |> NaiveDateTime.from_iso8601() do
-            {:ok, datetime} -> datetime
-            _ -> value
-          end
-
-        put_in(acc.rets_response.response.resource_date, resource_date)
-
-      _, acc ->
-        acc
-    end)
-  end
-
-  # defp event_fun({:startElement, _, 'Class', _, _}, _, %{element: %Resource{} = resource} = state) do
-  #   put_in(state.element, {resource, %Class{}})
-  # end
-
-  defp event_fun({:startElement, _, _name, _, _attributes}, _, state) do
-    put_in(state.characters, [])
-  end
-
-  defp event_fun({:characters, characters}, _, state) do
-    put_in(state.characters, [characters | state.characters])
-  end
-
-  defp event_fun({:endElement, _, 'COMMENTS', _}, _, state) do
-    comments =
-      state.characters
-      |> Enum.reverse()
-      |> Enum.join("")
-
-    put_in(state.rets_response.response.comments, comments)
-  end
-
-  defp event_fun({:endElement, _, 'ResourceVersion', _}, _, state) do
-    resource_version =
-      state.characters
-      |> Enum.reverse()
-      |> Enum.join("")
-
-    put_in(state.rets_response.response.resource_version, resource_version)
-  end
-
-  defp event_fun({:endElement, _, 'ResourceDate', _}, _, state) do
-    value =
-      state.characters
-      |> Enum.reverse()
-      |> Enum.join("")
-
-    resource_date =
-      case value |> String.trim() |> NaiveDateTime.from_iso8601() do
-        {:ok, datetime} -> datetime
-        _ -> value
-      end
-
-    put_in(state.rets_response.response.resource_date, resource_date)
-  end
-
-  defp event_fun({:endElement, _, 'ForeignKeyVersion', _}, _, state) do
-    foreign_key_version =
-      state.characters
-      |> Enum.reverse()
-      |> Enum.join("")
-
-    put_in(state.rets_response.response.foreign_key_version, foreign_key_version)
-  end
-
-  defp event_fun({:endElement, _, 'ForeignKeyDate', _}, _, state) do
-    value =
-      state.characters
-      |> Enum.reverse()
-      |> Enum.join("")
-
-    foreign_key_date =
-      case value |> String.trim() |> NaiveDateTime.from_iso8601() do
-        {:ok, datetime} -> datetime
-        _ -> value
-      end
-
-    put_in(state.rets_response.response.foreign_key_date, foreign_key_date)
-  end
-
-  defp event_fun({:endElement, _, 'FilterVersion', _}, _, state) do
-    filter_version =
-      state.characters
-      |> Enum.reverse()
-      |> Enum.join("")
-
-    put_in(state.rets_response.response.filter_version, filter_version)
-  end
-
-  defp event_fun({:endElement, _, 'FilterDate', _}, _, state) do
-    value =
-      state.characters
-      |> Enum.reverse()
-      |> Enum.join("")
-
-    filter_date =
-      case value |> String.trim() |> NaiveDateTime.from_iso8601() do
-        {:ok, datetime} -> datetime
-        _ -> value
-      end
-
-    put_in(state.rets_response.response.filter_date, filter_date)
-  end
-
-  # defp event_fun(
-  #        {:endElement, _, 'Class', _},
-  #        _,
-  #        %{element: {%Resource{} = resource, %Class{} = class}} = state
-  #      ) do
-  #   resource = put_in(resource.classes, [class | resource.classes])
-  #   put_in(state.element, resource)
-  # end
-
-  defp event_fun(_event, _, state), do: state
-
-  @impl XmlParser
-  def start_element("METADATA", _attributes) do
-    :skip
-  end
-
-  def start_element("METADATA-SYSTEM", attributes) do
-    metadata = parse_attributes(attributes)
-    {:ok, metadata}
-  end
-
-  def start_element(_, _) do
-    :skip
-  end
-
-  defp parse_attributes(attributes) do
-    Enum.reduce(attributes, %__MODULE__{}, fn
-      {"Version", version}, acc ->
-        put_in(acc.version, version)
-
-      {"Date", value}, acc ->
-        date =
-          case NaiveDateTime.from_iso8601(value) do
-            {:ok, datetime} -> datetime
-            _ -> value
-          end
-
-        put_in(acc.date, date)
-
-      _, acc ->
-        acc
-    end)
   end
 end
