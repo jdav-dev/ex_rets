@@ -87,4 +87,17 @@ defmodule ExRets.Metadata.Resource.Class.Update.UpdateType do
   the user should have a value of "-1".
   """
   @type search_query_order :: integer()
+
+  def parse_attributes(value) do
+    value
+    |> String.split(",")
+    |> Enum.map(&ExRets.XmlHelpers.parse_integer/1)
+  end
+
+  def parse_validation_expression_id(value) do
+    value
+    |> String.split(",")
+    |> Enum.map(&ExRets.XmlHelpers.empty_string_to_nil/1)
+    |> Enum.reject(&is_nil/1)
+  end
 end

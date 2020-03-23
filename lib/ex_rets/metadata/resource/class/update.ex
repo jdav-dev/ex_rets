@@ -81,4 +81,13 @@ defmodule ExRets.Metadata.Resource.Class.Update do
   If this value is `true`, the BeginUpdate action MUST be called before this update action.
   """
   @type requires_begin :: boolean()
+
+  def parse_update_action("Add"), do: :add
+  def parse_update_action("Clone"), do: :clone
+  def parse_update_action("Change"), do: :change
+  def parse_update_action("Delete"), do: :delete
+  def parse_update_action("BeginUpdate"), do: :begin_update
+  def parse_update_action("CancelUpdate"), do: :cancel_update
+  def parse_update_action("ShowLocks"), do: :show_locks
+  def parse_update_action(value), do: value
 end

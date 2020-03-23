@@ -115,4 +115,12 @@ defmodule ExRets.Metadata.Resource.Class.ColumnGroupSet do
   Master/Detail relationship.
   """
   @type foreign_key_id :: String.t()
+
+  def parse_presentation_style("Edit"), do: :edit
+  def parse_presentation_style("Matrix"), do: :matrix
+  def parse_presentation_style("List"), do: :list
+  def parse_presentation_style("Edit List"), do: :edit_list
+  def parse_presentation_style("GIS Map Search"), do: :gis_map_search
+  def parse_presentation_style("URL"), do: :url
+  def parse_presentation_style(value), do: value
 end

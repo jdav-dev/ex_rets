@@ -1,16 +1,14 @@
 defmodule ExRets.Metadata.Resource.Lookup do
   alias ExRets.Metadata.Resource.Lookup.LookupType
 
-  defstruct [
-    :metadata_entry_id,
-    :lookup_name,
-    :visible_name,
-    :lookup_type_version,
-    :lookup_type_date,
-    :lookup_types,
-    :filter_id,
-    :not_shown_by_default
-  ]
+  defstruct metadata_entry_id: nil,
+            lookup_name: nil,
+            visible_name: nil,
+            lookup_type_version: nil,
+            lookup_type_date: nil,
+            lookup_types: [],
+            filter_id: nil,
+            not_shown_by_default: nil
 
   @typedoc """
   The lookup tables that are referenced by the LookupName in the Table section.  There MUST be a

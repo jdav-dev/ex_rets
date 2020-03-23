@@ -287,4 +287,43 @@ defmodule ExRets.Metadata.Resource.Class.Field do
       a case insensitive search.
   """
   @type case :: :upper | :lower | :exact | :mixed
+
+  def parse_data_type("Boolean"), do: :boolean
+  def parse_data_type("Character"), do: :character
+  def parse_data_type("Date"), do: :date
+  def parse_data_type("DateTime"), do: :date_time
+  def parse_data_type("Time"), do: :time
+  def parse_data_type("Tiny"), do: :tiny
+  def parse_data_type("Small"), do: :small
+  def parse_data_type("Int"), do: :int
+  def parse_data_type("Long"), do: :long
+  def parse_data_type("Decimal"), do: :decimal
+  def parse_data_type(value), do: value
+
+  def parse_interpretation("Number"), do: :number
+  def parse_interpretation("Currency"), do: :currency
+  def parse_interpretation("Lookup"), do: :lookup
+  def parse_interpretation("LookupMulti"), do: :lookup_multi
+  def parse_interpretation("URI"), do: :uri
+  def parse_interpretation(value), do: value
+
+  def parse_alignment("Left"), do: :left
+  def parse_alignment("Right"), do: :right
+  def parse_alignment("Center"), do: :center
+  def parse_alignment("Justify"), do: :justify
+  def parse_alignment(value), do: value
+
+  def parse_units("Feet"), do: :feet
+  def parse_units("Meters"), do: :meters
+  def parse_units("SqFt"), do: :sq_ft
+  def parse_units("SqMeters"), do: :sq_meters
+  def parse_units("Acres"), do: :acres
+  def parse_units("Hectares"), do: :hectares
+  def parse_units(value), do: value
+
+  def parse_case("UPPER"), do: :upper
+  def parse_case("LOWER"), do: :lower
+  def parse_case("EXACT"), do: :exact
+  def parse_case("MIXED"), do: :mixed
+  def parse_case(value), do: value
 end

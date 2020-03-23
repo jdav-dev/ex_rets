@@ -1,4 +1,6 @@
 defmodule ExRets.Metadata.Resource.Object do
+  import ExRets.XmlHelpers, only: [empty_string_to_nil: 1]
+
   defstruct [
     :metadata_entry_id,
     :object_type,
@@ -92,4 +94,14 @@ defmodule ExRets.Metadata.Resource.Object do
   not have a maximum file size, this field MUST be `nil`.
   """
   @type max_file_size :: pos_integer() | nil
+
+  def parse_object_data(value) do
+    case String.split(value, ":") do
+      [resource_id, class_name] ->
+        {empty_string_to_nil(resource_id), empty_string_to_nil(class_name)}
+
+      _ ->
+        value
+    end
+  end
 end
