@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.Class do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   alias ExRets.Metadata.Resource.Class.ColumnGroup
   alias ExRets.Metadata.Resource.Class.ColumnGroupSet
   alias ExRets.Metadata.Resource.Class.Field
@@ -140,4 +143,100 @@ defmodule ExRets.Metadata.Resource.Class do
 
   @typedoc "The latest change date of any contained metadata."
   @type column_group_date :: NaiveDateTime.t()
+
+  def standard_xml_schema do
+    root "Class", %__MODULE__{} do
+      element "ClassName" do
+        text :class_name, transform: &empty_string_to_nil/1
+      end
+
+      element "StandardName" do
+        text :standard_name, transform: &empty_string_to_nil/1
+      end
+
+      element "VisibleName" do
+        text :visible_name, transform: &empty_string_to_nil/1
+      end
+
+      element "Description" do
+        text :description, transform: &empty_string_to_nil/1
+      end
+
+      element "TableVersion" do
+        text :field_version, transform: &empty_string_to_nil/1
+      end
+
+      element "TableDate" do
+        text :field_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-TABLE" do
+        attribute "Version", :field_version, transform: &empty_string_to_nil/1
+        attribute "Date", :field_date, transform: &parse_naive_date_time/1
+        child_element :fields, Field.standard_xml_schema(), list: true
+      end
+
+      element "UpdateVersion" do
+        text :update_version, transform: &empty_string_to_nil/1
+      end
+
+      element "UpdateDate" do
+        text :update_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-UPDATE" do
+        attribute "Version", :update_version, transform: &empty_string_to_nil/1
+        attribute "Date", :update_date, transform: &parse_naive_date_time/1
+        child_element :updates, Update.standard_xml_schema(), list: true
+      end
+
+      element "ClassTimestamp" do
+        text :class_timestamp, transform: &empty_string_to_nil/1
+      end
+
+      element "DeletedFlagField" do
+        text :deleted_flag_field, transform: &empty_string_to_nil/1
+      end
+
+      element "DeletedFlagValue" do
+        text :deleted_flag_value, transform: &empty_string_to_nil/1
+      end
+
+      element "HasKeyIndex" do
+        text :has_key_index, transform: &parse_boolean/1
+      end
+
+      element "OffsetSupport" do
+        text :offset_support, transform: &parse_boolean/1
+      end
+
+      element "ColumnGroupSetVersion" do
+        text :column_group_set_version, transform: &empty_string_to_nil/1
+      end
+
+      element "ColumnGroupSetDate" do
+        text :column_group_set_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-COLUMN_GROUP_SET" do
+        attribute "Version", :column_group_set_version, transform: &empty_string_to_nil/1
+        attribute "Date", :column_group_set_date, transform: &parse_naive_date_time/1
+        child_element :column_group_sets, ColumnGroupSet.standard_xml_schema(), list: true
+      end
+
+      element "ColumnGroupVersion" do
+        text :column_group_version, transform: &empty_string_to_nil/1
+      end
+
+      element "ColumnGroupDate" do
+        text :column_group_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-COLUMN_GROUP" do
+        attribute "Version", :column_group_version, transform: &empty_string_to_nil/1
+        attribute "Date", :column_group_date, transform: &parse_naive_date_time/1
+        child_element :column_groups, ColumnGroup.standard_xml_schema(), list: true
+      end
+    end
+  end
 end

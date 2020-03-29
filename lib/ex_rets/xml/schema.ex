@@ -14,7 +14,7 @@ defmodule ExRets.Xml.Schema do
     quote bind_quoted: [element_name: element_name, initial_acc: initial_acc], unquote: true do
       {:ok, var!(pid, ExRets.Xml)} = SchemaBuilder.start_builder()
 
-      SchemaBuilder.start_element(var!(pid, ExRets.Xml), element_name, nil, initial_acc, false)
+      SchemaBuilder.start_element(var!(pid, ExRets.Xml), element_name, nil, initial_acc)
       unquote(do_block)
       SchemaBuilder.end_element(var!(pid, ExRets.Xml))
 
@@ -25,7 +25,7 @@ defmodule ExRets.Xml.Schema do
 
   defmacro element(element_name, do: do_block) do
     quote do
-      SchemaBuilder.start_element(var!(pid, ExRets.Xml), unquote(element_name), nil, nil, false)
+      SchemaBuilder.start_element(var!(pid, ExRets.Xml), unquote(element_name), nil, nil)
       unquote(do_block)
       SchemaBuilder.end_element(var!(pid, ExRets.Xml))
     end

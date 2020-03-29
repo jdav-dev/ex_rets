@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.Class.Update.UpdateType do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   defstruct [
     :metadata_entry_id,
     :system_name,
@@ -88,13 +91,58 @@ defmodule ExRets.Metadata.Resource.Class.Update.UpdateType do
   """
   @type search_query_order :: integer()
 
-  def parse_attributes(value) do
+  def standard_xml_schema do
+    root "UpdateType", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "SystemName" do
+        text :system_name, transform: &empty_string_to_nil/1
+      end
+
+      element "Sequence" do
+        text :sequence, transform: &parse_integer/1
+      end
+
+      element "Attributes" do
+        text :attributes, transform: &parse_attributes/1
+      end
+
+      element "Default" do
+        text :default, transform: &empty_string_to_nil/1
+      end
+
+      element "ValidationExpressionID" do
+        text :validation_expression_id,
+          transform: &parse_validation_expression_id/1
+      end
+
+      element "UpdateHelpID" do
+        text :update_help_id, transform: &empty_string_to_nil/1
+      end
+
+      element "MaxUpdate" do
+        text :max_update, transform: &parse_integer/1
+      end
+
+      element "SearchResultOrder" do
+        text :search_result_order, transform: &parse_integer/1
+      end
+
+      element "SearchQueryOrder" do
+        text :search_query_order, transform: &parse_integer/1
+      end
+    end
+  end
+
+  defp parse_attributes(value) do
     value
     |> String.split(",")
     |> Enum.map(&ExRets.StringParsers.parse_integer/1)
   end
 
-  def parse_validation_expression_id(value) do
+  defp parse_validation_expression_id(value) do
     value
     |> String.split(",")
     |> Enum.map(&ExRets.StringParsers.empty_string_to_nil/1)

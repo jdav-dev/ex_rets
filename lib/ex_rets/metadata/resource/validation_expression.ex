@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.ValidationExpression do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   defstruct [
     :metadata_entry_id,
     :validation_expression_id,
@@ -44,4 +47,32 @@ defmodule ExRets.Metadata.Resource.ValidationExpression do
 
   @typedoc "If `true`, the string comparisons in the expressions are case sensitive."
   @type is_case_sensitive :: boolean()
+
+  def standard_xml_schema do
+    root "ValidationExpression", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "ValidationExpressionID" do
+        text :validation_expression_id, transform: &empty_string_to_nil/1
+      end
+
+      element "ValidationExpressionType" do
+        text :validation_expression_type, transform: &empty_string_to_nil/1
+      end
+
+      element "Value" do
+        text :value, transform: &empty_string_to_nil/1
+      end
+
+      element "Message" do
+        text :message, transform: &empty_string_to_nil/1
+      end
+
+      element "IsCaseSensitive" do
+        text :is_case_sensitive, transform: &parse_boolean/1
+      end
+    end
+  end
 end

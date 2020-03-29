@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.Class.ColumnGroup.ColumnGroupTable do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   defstruct [
     :metadata_entry_id,
     :system_name,
@@ -86,4 +89,44 @@ defmodule ExRets.Metadata.Resource.Class.ColumnGroup.ColumnGroupTable do
   This is primarily intended for use
   """
   @type immediate_refresh :: boolean()
+
+  def standard_xml_schema do
+    root "ColumnGroupTable", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "SystemName" do
+        text :system_name, transform: &empty_string_to_nil/1
+      end
+
+      element "ColumnGroupSetName" do
+        text :column_group_set_name, transform: &empty_string_to_nil/1
+      end
+
+      element "LongName" do
+        text :long_name, transform: &empty_string_to_nil/1
+      end
+
+      element "ShortName" do
+        text :short_name, transform: &empty_string_to_nil/1
+      end
+
+      element "DisplayOrder" do
+        text :display_order, transform: &parse_integer/1
+      end
+
+      element "DisplayLength" do
+        text :display_length, transform: &parse_integer/1
+      end
+
+      element "DisplayHeight" do
+        text :display_height, transform: &parse_integer/1
+      end
+
+      element "ImmediateRefresh" do
+        text :immediate_refresh, transform: &parse_boolean/1
+      end
+    end
+  end
 end

@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.ValidationExternal do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   alias ExRets.Metadata.Resource.ValidationExternal.ValidationExternalType
 
   defstruct [
@@ -69,4 +72,40 @@ defmodule ExRets.Metadata.Resource.ValidationExternal do
 
   @typedoc "The latest change date of any contained metadata."
   @type validation_external_type_date :: NaiveDateTime.t()
+
+  def standard_xml_schema do
+    root "ValidationExternal", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "ValidationExternalName" do
+        text :validation_external_name, transform: &empty_string_to_nil/1
+      end
+
+      element "SearchResource" do
+        text :search_resource, transform: &empty_string_to_nil/1
+      end
+
+      element "SearchClass" do
+        text :search_class, transform: &empty_string_to_nil/1
+      end
+
+      element "Version" do
+        text :version, transform: &empty_string_to_nil/1
+      end
+
+      element "Date" do
+        text :date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-VALIDATION_EXTERNAL_TYPE" do
+        attribute "Version", :validation_external_type_version, transform: &empty_string_to_nil/1
+        attribute "Date", :validation_external_type_date, transform: &parse_naive_date_time/1
+
+        child_element :validation_external_types, ValidationExternalType.standard_xml_schema(),
+          list: true
+      end
+    end
+  end
 end

@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.Class.Field do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   defstruct [
     :metadata_entry_id,
     :system_name,
@@ -288,42 +291,170 @@ defmodule ExRets.Metadata.Resource.Class.Field do
   """
   @type case :: :upper | :lower | :exact | :mixed
 
-  def parse_data_type("Boolean"), do: :boolean
-  def parse_data_type("Character"), do: :character
-  def parse_data_type("Date"), do: :date
-  def parse_data_type("DateTime"), do: :date_time
-  def parse_data_type("Time"), do: :time
-  def parse_data_type("Tiny"), do: :tiny
-  def parse_data_type("Small"), do: :small
-  def parse_data_type("Int"), do: :int
-  def parse_data_type("Long"), do: :long
-  def parse_data_type("Decimal"), do: :decimal
-  def parse_data_type(value), do: value
+  def standard_xml_schema do
+    root "Table", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
 
-  def parse_interpretation("Number"), do: :number
-  def parse_interpretation("Currency"), do: :currency
-  def parse_interpretation("Lookup"), do: :lookup
-  def parse_interpretation("LookupMulti"), do: :lookup_multi
-  def parse_interpretation("URI"), do: :uri
-  def parse_interpretation(value), do: value
+      element "SystemName" do
+        text :system_name, transform: &empty_string_to_nil/1
+      end
 
-  def parse_alignment("Left"), do: :left
-  def parse_alignment("Right"), do: :right
-  def parse_alignment("Center"), do: :center
-  def parse_alignment("Justify"), do: :justify
-  def parse_alignment(value), do: value
+      element "StandardName" do
+        text :standard_name, transform: &empty_string_to_nil/1
+      end
 
-  def parse_units("Feet"), do: :feet
-  def parse_units("Meters"), do: :meters
-  def parse_units("SqFt"), do: :sq_ft
-  def parse_units("SqMeters"), do: :sq_meters
-  def parse_units("Acres"), do: :acres
-  def parse_units("Hectares"), do: :hectares
-  def parse_units(value), do: value
+      element "LongName" do
+        text :long_name, transform: &empty_string_to_nil/1
+      end
 
-  def parse_case("UPPER"), do: :upper
-  def parse_case("LOWER"), do: :lower
-  def parse_case("EXACT"), do: :exact
-  def parse_case("MIXED"), do: :mixed
-  def parse_case(value), do: value
+      element "DBName" do
+        text :db_name, transform: &empty_string_to_nil/1
+      end
+
+      element "ShortName" do
+        text :short_name, transform: &empty_string_to_nil/1
+      end
+
+      element "MaximumLength" do
+        text :maximum_length, transform: &parse_integer/1
+      end
+
+      element "DataType" do
+        text :data_type, transform: &parse_data_type/1
+      end
+
+      element "Precision" do
+        text :precision, transform: &parse_integer/1
+      end
+
+      element "Searchable" do
+        text :searchable, transform: &parse_boolean/1
+      end
+
+      element "Interpretation" do
+        text :interpretation, transform: &parse_interpretation/1
+      end
+
+      element "Alignment" do
+        text :alignment, transform: &parse_alignment/1
+      end
+
+      element "UseSeparator" do
+        text :use_separator, transform: &parse_boolean/1
+      end
+
+      element "EditMaskID" do
+        text :edit_mask_id, transform: &empty_string_to_nil/1
+      end
+
+      element "LookupName" do
+        text :lookup_name, transform: &empty_string_to_nil/1
+      end
+
+      element "MaxSelect" do
+        text :max_select, transform: &parse_integer/1
+      end
+
+      element "Units" do
+        text :units, transform: &parse_units/1
+      end
+
+      element "Index" do
+        text :index, transform: &parse_boolean/1
+      end
+
+      element "Minimum" do
+        text :minimum, transform: &parse_integer/1
+      end
+
+      element "Maximum" do
+        text :maximum, transform: &parse_integer/1
+      end
+
+      element "Default" do
+        text :default, transform: &parse_integer/1
+      end
+
+      element "Required" do
+        text :required, transform: &parse_integer/1
+      end
+
+      element "SearchHelpID" do
+        text :search_help_id, transform: &empty_string_to_nil/1
+      end
+
+      element "Unique" do
+        text :unique, transform: &parse_boolean/1
+      end
+
+      element "ModTimeStamp" do
+        text :mod_time_stamp, transform: &parse_boolean/1
+      end
+
+      element "ForeignKeyName" do
+        text :foreign_key_name, transform: &empty_string_to_nil/1
+      end
+
+      element "ForeignField" do
+        text :foreign_field, transform: &empty_string_to_nil/1
+      end
+
+      element "InKeyIndex" do
+        text :in_key_index, transform: &parse_boolean/1
+      end
+
+      element "FilterParentField" do
+        text :filter_parent_field, transform: &empty_string_to_nil/1
+      end
+
+      element "DefaultSearchOrder" do
+        text :default_search_order, transform: &parse_integer/1
+      end
+
+      element "Case" do
+        text :case, transform: &parse_case/1
+      end
+    end
+  end
+
+  defp parse_data_type("Boolean"), do: :boolean
+  defp parse_data_type("Character"), do: :character
+  defp parse_data_type("Date"), do: :date
+  defp parse_data_type("DateTime"), do: :date_time
+  defp parse_data_type("Time"), do: :time
+  defp parse_data_type("Tiny"), do: :tiny
+  defp parse_data_type("Small"), do: :small
+  defp parse_data_type("Int"), do: :int
+  defp parse_data_type("Long"), do: :long
+  defp parse_data_type("Decimal"), do: :decimal
+  defp parse_data_type(value), do: value
+
+  defp parse_interpretation("Number"), do: :number
+  defp parse_interpretation("Currency"), do: :currency
+  defp parse_interpretation("Lookup"), do: :lookup
+  defp parse_interpretation("LookupMulti"), do: :lookup_multi
+  defp parse_interpretation("URI"), do: :uri
+  defp parse_interpretation(value), do: value
+
+  defp parse_alignment("Left"), do: :left
+  defp parse_alignment("Right"), do: :right
+  defp parse_alignment("Center"), do: :center
+  defp parse_alignment("Justify"), do: :justify
+  defp parse_alignment(value), do: value
+
+  defp parse_units("Feet"), do: :feet
+  defp parse_units("Meters"), do: :meters
+  defp parse_units("SqFt"), do: :sq_ft
+  defp parse_units("SqMeters"), do: :sq_meters
+  defp parse_units("Acres"), do: :acres
+  defp parse_units("Hectares"), do: :hectares
+  defp parse_units(value), do: value
+
+  defp parse_case("UPPER"), do: :upper
+  defp parse_case("LOWER"), do: :lower
+  defp parse_case("EXACT"), do: :exact
+  defp parse_case("MIXED"), do: :mixed
+  defp parse_case(value), do: value
 end

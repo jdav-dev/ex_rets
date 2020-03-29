@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.Class.ColumnGroup.ColumnGroupNormalization do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   defstruct [
     :metadata_entry_id,
     :type_identifier,
@@ -51,4 +54,28 @@ defmodule ExRets.Metadata.Resource.Class.ColumnGroup.ColumnGroupNormalization do
   not part of the grid.  The SystemName MUST be unique within the ColumnGroup.
   """
   @type system_name :: String.t()
+
+  def standard_xml_schema do
+    root "ColumnGroupNormalization", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "TypeIdentifier" do
+        text :type_identifier, transform: &empty_string_to_nil/1
+      end
+
+      element "Sequence" do
+        text :sequence, transform: &empty_string_to_nil/1
+      end
+
+      element "ColumnLabel" do
+        text :column_label, transform: &empty_string_to_nil/1
+      end
+
+      element "SystemName" do
+        text :system_name, transform: &empty_string_to_nil/1
+      end
+    end
+  end
 end

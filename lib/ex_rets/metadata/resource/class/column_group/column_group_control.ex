@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.Class.ColumnGroup.ColumnGroupControl do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   defstruct [
     :metadata_entry_id,
     :low_value,
@@ -39,4 +42,20 @@ defmodule ExRets.Metadata.Resource.Class.ColumnGroup.ColumnGroupControl do
   restricting data is not a range, then HighValue may be `nil`.
   """
   @type high_value :: String.t() | nil
+
+  def standard_xml_schema do
+    root "ColumnGroupControl", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "LowValue" do
+        text :low_value, transform: &empty_string_to_nil/1
+      end
+
+      element "HighValue" do
+        text :high_value, transform: &empty_string_to_nil/1
+      end
+    end
+  end
 end

@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.EditMask do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   defstruct [
     :metadata_entry_id,
     :edit_mask_id,
@@ -26,4 +29,20 @@ defmodule ExRets.Metadata.Resource.EditMask do
 
   @typedoc "The Regular Expression to be used."
   @type value :: String.t()
+
+  def standard_xml_schema do
+    root "EditMask", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "EditMaskID" do
+        text :edit_mask_id, transform: &empty_string_to_nil/1
+      end
+
+      element "Value" do
+        text :value, transform: &empty_string_to_nil/1
+      end
+    end
+  end
 end

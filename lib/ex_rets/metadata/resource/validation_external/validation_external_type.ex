@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.ValidationExternal.ValidationExternalType do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   defstruct [
     :metadata_entry_id,
     :search_field,
@@ -35,4 +38,24 @@ defmodule ExRets.Metadata.Resource.ValidationExternal.ValidationExternalType do
   second is a source field in the table being searched.  The fields use `SystemName`.
   """
   @type result_fields :: [{String.t(), String.t()}]
+
+  def standard_xml_schema do
+    root "ValidationExternalType", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "SearchField" do
+        text :search_field, transform: &empty_string_to_nil/1
+      end
+
+      element "DisplayField" do
+        text :display_field, transform: &empty_string_to_nil/1
+      end
+
+      element "ResultFields" do
+        text :result_fields, transform: &empty_string_to_nil/1
+      end
+    end
+  end
 end

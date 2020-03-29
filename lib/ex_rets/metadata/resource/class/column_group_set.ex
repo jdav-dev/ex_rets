@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.Class.ColumnGroupSet do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   defstruct [
     :metadata_entry_id,
     :column_group_set_name,
@@ -116,11 +119,60 @@ defmodule ExRets.Metadata.Resource.Class.ColumnGroupSet do
   """
   @type foreign_key_id :: String.t()
 
-  def parse_presentation_style("Edit"), do: :edit
-  def parse_presentation_style("Matrix"), do: :matrix
-  def parse_presentation_style("List"), do: :list
-  def parse_presentation_style("Edit List"), do: :edit_list
-  def parse_presentation_style("GIS Map Search"), do: :gis_map_search
-  def parse_presentation_style("URL"), do: :url
-  def parse_presentation_style(value), do: value
+  def standard_xml_schema do
+    root "ColumnGroupSet", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "ColumnGroupSetName" do
+        text :column_group_set_name, transform: &empty_string_to_nil/1
+      end
+
+      element "ColumnGroupSetParent" do
+        text :column_group_set_parent, transform: &empty_string_to_nil/1
+      end
+
+      element "Sequence" do
+        text :sequence, transform: &parse_integer/1
+      end
+
+      element "LongName" do
+        text :long_name, transform: &empty_string_to_nil/1
+      end
+
+      element "ShortName" do
+        text :short_name, transform: &empty_string_to_nil/1
+      end
+
+      element "Description" do
+        text :description, transform: &empty_string_to_nil/1
+      end
+
+      element "ColumnGroupName" do
+        text :column_group_name, transform: &empty_string_to_nil/1
+      end
+
+      element "PresentationStyle" do
+        text :presentation_style,
+          transform: &parse_presentation_style/1
+      end
+
+      element "URL" do
+        text :url, transform: &empty_string_to_nil/1
+      end
+
+      element "ForeignKeyID" do
+        text :foreign_key_id, transform: &empty_string_to_nil/1
+      end
+    end
+  end
+
+  defp parse_presentation_style("Edit"), do: :edit
+  defp parse_presentation_style("Matrix"), do: :matrix
+  defp parse_presentation_style("List"), do: :list
+  defp parse_presentation_style("Edit List"), do: :edit_list
+  defp parse_presentation_style("GIS Map Search"), do: :gis_map_search
+  defp parse_presentation_style("URL"), do: :url
+  defp parse_presentation_style(value), do: value
 end

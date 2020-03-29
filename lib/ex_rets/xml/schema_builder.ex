@@ -3,7 +3,7 @@ defmodule ExRets.Xml.SchemaBuilder do
     Agent.start_link(fn -> %{current_path: [], elements: %{}} end)
   end
 
-  def start_element(pid, element_name, parent_acc_field, initial_acc, opts) do
+  def start_element(pid, element_name, parent_acc_field, initial_acc, opts \\ []) do
     list? = is_list_from_opts(opts)
 
     Agent.update(pid, fn %{current_path: current_path, elements: elements} ->
@@ -22,7 +22,12 @@ defmodule ExRets.Xml.SchemaBuilder do
     end)
   end
 
-  def add_child_element(pid, parent_acc_field, %{elements: incoming_elements} = _schema, opts) do
+  def add_child_element(
+        pid,
+        parent_acc_field,
+        %{elements: incoming_elements} = _schema,
+        opts \\ []
+      ) do
     list? = is_list_from_opts(opts)
 
     Agent.update(pid, fn %{current_path: current_path, elements: elements} = state ->
@@ -43,7 +48,7 @@ defmodule ExRets.Xml.SchemaBuilder do
     end)
   end
 
-  def add_attribute(pid, attribute_name, acc_field, opts) do
+  def add_attribute(pid, attribute_name, acc_field, opts \\ []) do
     transform_fun = transform_fun_from_opts(opts)
 
     Agent.update(pid, fn %{current_path: current_path, elements: elements} = state ->
@@ -58,7 +63,7 @@ defmodule ExRets.Xml.SchemaBuilder do
     end)
   end
 
-  def add_text(pid, parent_acc_field, opts) do
+  def add_text(pid, parent_acc_field, opts \\ []) do
     transform_fun = transform_fun_from_opts(opts)
 
     Agent.update(pid, fn %{current_path: current_path, elements: elements} = state ->

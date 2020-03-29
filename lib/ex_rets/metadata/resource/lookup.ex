@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.Lookup do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   alias ExRets.Metadata.Resource.Lookup.LookupType
 
   defstruct metadata_entry_id: nil,
@@ -63,4 +66,42 @@ defmodule ExRets.Metadata.Resource.Lookup do
   GetMetadata Transaction.  This field MUST be set to `false` unless a FilterID is not `nil`.
   """
   @type not_shown_by_default :: boolean()
+
+  def standard_xml_schema do
+    root "Lookup", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "LookupName" do
+        text :lookup_name, transform: &empty_string_to_nil/1
+      end
+
+      element "VisibleName" do
+        text :visible_name, transform: &empty_string_to_nil/1
+      end
+
+      element "LookupTypeVersion" do
+        text :lookup_type_version, transform: &empty_string_to_nil/1
+      end
+
+      element "LookupTypeDate" do
+        text :lookup_type_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-LOOKUP_TYPE" do
+        attribute "Version", :lookup_type_version, transform: &empty_string_to_nil/1
+        attribute "Date", :lookup_type_date, transform: &parse_naive_date_time/1
+        child_element :lookup_types, LookupType.standard_xml_schema(), list: true
+      end
+
+      element "FilterID" do
+        text :filter_id, transform: &empty_string_to_nil/1
+      end
+
+      element "NotShownByDefault" do
+        text :not_shown_by_default, transform: &parse_boolean/1
+      end
+    end
+  end
 end

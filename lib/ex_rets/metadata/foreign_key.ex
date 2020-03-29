@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.ForeignKey do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   defstruct [
     :foreign_key_id,
     :parent_resource_id,
@@ -91,4 +94,48 @@ defmodule ExRets.Metadata.ForeignKey do
   source to the destination.
   """
   @type one_to_many_flag :: boolean()
+
+  def standard_xml_schema do
+    root "ForeignKey", %__MODULE__{} do
+      element "ForeignKeyID" do
+        text :foreign_key_id, transform: &empty_string_to_nil/1
+      end
+
+      element "ParentResourceID" do
+        text :parent_resource_id, transform: &empty_string_to_nil/1
+      end
+
+      element "ParentClassID" do
+        text :parent_class_id, transform: &empty_string_to_nil/1
+      end
+
+      element "ParentSystemName" do
+        text :parent_system_name, transform: &empty_string_to_nil/1
+      end
+
+      element "ChildResourceID" do
+        text :child_resource_id, transform: &empty_string_to_nil/1
+      end
+
+      element "ChildClassID" do
+        text :child_class_id, transform: &empty_string_to_nil/1
+      end
+
+      element "ChildSystemName" do
+        text :child_system_name, transform: &empty_string_to_nil/1
+      end
+
+      element "ConditionalParentField" do
+        text :conditional_parent_field, transform: &empty_string_to_nil/1
+      end
+
+      element "ConditionalParentValue" do
+        text :conditional_parent_value, transform: &empty_string_to_nil/1
+      end
+
+      element "OneToManyFlag" do
+        text :one_to_many_flag, transform: &parse_boolean/1
+      end
+    end
+  end
 end

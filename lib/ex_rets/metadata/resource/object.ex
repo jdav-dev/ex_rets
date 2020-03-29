@@ -1,5 +1,6 @@
 defmodule ExRets.Metadata.Resource.Object do
-  import ExRets.StringParsers, only: [empty_string_to_nil: 1]
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
 
   defstruct [
     :metadata_entry_id,
@@ -95,7 +96,55 @@ defmodule ExRets.Metadata.Resource.Object do
   """
   @type max_file_size :: pos_integer() | nil
 
-  def parse_object_data(value) do
+  def standard_xml_schema do
+    root "Object", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "ObjectType" do
+        text :object_type, transform: &empty_string_to_nil/1
+      end
+
+      element "MIMEType" do
+        text :mime_type, transform: &empty_string_to_nil/1
+      end
+
+      element "VisibleName" do
+        text :visible_name, transform: &empty_string_to_nil/1
+      end
+
+      element "Description" do
+        text :description, transform: &empty_string_to_nil/1
+      end
+
+      element "ObjectTimeStamp" do
+        text :object_time_stamp, transform: &empty_string_to_nil/1
+      end
+
+      element "ObjectCount" do
+        text :object_count, transform: &empty_string_to_nil/1
+      end
+
+      element "LocationAvailability" do
+        text :location_availability, transform: &parse_boolean/1
+      end
+
+      element "PostSupport" do
+        text :post_support, transform: &parse_boolean/1
+      end
+
+      element "ObjectData" do
+        text :object_data, transform: &parse_object_data/1
+      end
+
+      element "MaxFileSize" do
+        text :max_file_size, transform: &parse_integer/1
+      end
+    end
+  end
+
+  defp parse_object_data(value) do
     case String.split(value, ":") do
       [resource_id, class_name] ->
         {empty_string_to_nil(resource_id), empty_string_to_nil(class_name)}

@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.Class.Update do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   alias ExRets.Metadata.Resource.Class.Update.UpdateType
 
   defstruct [
@@ -82,12 +85,50 @@ defmodule ExRets.Metadata.Resource.Class.Update do
   """
   @type requires_begin :: boolean()
 
-  def parse_update_action("Add"), do: :add
-  def parse_update_action("Clone"), do: :clone
-  def parse_update_action("Change"), do: :change
-  def parse_update_action("Delete"), do: :delete
-  def parse_update_action("BeginUpdate"), do: :begin_update
-  def parse_update_action("CancelUpdate"), do: :cancel_update
-  def parse_update_action("ShowLocks"), do: :show_locks
-  def parse_update_action(value), do: value
+  def standard_xml_schema do
+    root "Update", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "UpdateAction" do
+        text :update_version, transform: &parse_update_action/1
+      end
+
+      element "Description" do
+        text :description, transform: &empty_string_to_nil/1
+      end
+
+      element "KeyField" do
+        text :key_field, transform: &empty_string_to_nil/1
+      end
+
+      element "UpdateTypeVersion" do
+        text :update_type_version, transform: &empty_string_to_nil/1
+      end
+
+      element "UpdateTypeDate" do
+        text :update_type_version, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-UPDATE_TYPE" do
+        attribute "Version", :update_type_version, transform: &empty_string_to_nil/1
+        attribute "Date", :update_type_date, transform: &parse_naive_date_time/1
+        child_element :update_types, UpdateType.standard_xml_schema(), list: true
+      end
+
+      element "RequiresBegin" do
+        text :requires_begin, transform: &parse_boolean/1
+      end
+    end
+  end
+
+  defp parse_update_action("Add"), do: :add
+  defp parse_update_action("Clone"), do: :clone
+  defp parse_update_action("Change"), do: :change
+  defp parse_update_action("Delete"), do: :delete
+  defp parse_update_action("BeginUpdate"), do: :begin_update
+  defp parse_update_action("CancelUpdate"), do: :cancel_update
+  defp parse_update_action("ShowLocks"), do: :show_locks
+  defp parse_update_action(value), do: value
 end

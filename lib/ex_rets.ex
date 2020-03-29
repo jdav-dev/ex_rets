@@ -20,6 +20,7 @@ defmodule ExRets do
   alias ExRets.RetsResponse
   alias ExRets.SearchArguments
   alias ExRets.SearchResponse
+  alias ExRets.Xml
 
   @typedoc "RETS client."
   @typedoc since: "0.1.0"
@@ -147,7 +148,7 @@ defmodule ExRets do
       http_client_implementation = rets_client.http_client_implementation
 
       with {:ok, _response, stream} <- Middleware.open_stream(rets_client, request) do
-        Metadata.parse(stream, http_client_implementation)
+        Xml.parse(Metadata.standard_xml_schema(), stream, http_client_implementation)
       end
     end
   end

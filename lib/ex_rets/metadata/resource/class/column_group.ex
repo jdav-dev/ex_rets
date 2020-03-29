@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.Class.ColumnGroup do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   alias ExRets.Metadata.Resource.Class.ColumnGroup.ColumnGroupControl
   alias ExRets.Metadata.Resource.Class.ColumnGroup.ColumnGroupNormalization
   alias ExRets.Metadata.Resource.Class.ColumnGroup.ColumnGroupTable
@@ -105,4 +108,55 @@ defmodule ExRets.Metadata.Resource.Class.ColumnGroup do
 
   @typedoc "The latest change date of any contained metadata."
   @type column_group_normalization_date :: NaiveDateTime.t()
+
+  def standard_xml_schema do
+    root "ColumnGroup", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "ColumnGroupName" do
+        text :column_group_name, transform: &empty_string_to_nil/1
+      end
+
+      element "ControlSystemName" do
+        text :control_system_name, transform: &empty_string_to_nil/1
+      end
+
+      element "LongName" do
+        text :long_name, transform: &empty_string_to_nil/1
+      end
+
+      element "ShortName" do
+        text :short_name, transform: &empty_string_to_nil/1
+      end
+
+      element "Description" do
+        text :description, transform: &empty_string_to_nil/1
+      end
+
+      element "METADATA-COLUMN_GROUP_CONTROL" do
+        attribute "Version", :column_group_control_version, transform: &empty_string_to_nil/1
+        attribute "Date", :column_group_control_date, transform: &parse_naive_date_time/1
+        child_element :column_group_controls, ColumnGroupControl.standard_xml_schema(), list: true
+      end
+
+      element "METADATA-COLUMN_GROUP_TABLE" do
+        attribute "Version", :column_group_table_version, transform: &empty_string_to_nil/1
+        attribute "Date", :column_group_table_date, transform: &parse_naive_date_time/1
+        child_element :column_group_tables, ColumnGroupTable.standard_xml_schema(), list: true
+      end
+
+      element "METADATA-COLUMN_GROUP_NORMALIZATION" do
+        attribute "Version", :column_group_normalization_version,
+          transform: &empty_string_to_nil/1
+
+        attribute "Date", :column_group_normalization_date, transform: &parse_naive_date_time/1
+
+        child_element :column_group_normalizations,
+                      ColumnGroupNormalization.standard_xml_schema(),
+                      list: true
+      end
+    end
+  end
 end

@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Filter do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   alias ExRets.Metadata.Filter.FilterType
 
   defstruct [
@@ -56,4 +59,38 @@ defmodule ExRets.Metadata.Filter do
 
   @typedoc "The latest change date of any contained metadata."
   @type filter_type_date :: NaiveDateTime.t()
+
+  def standard_xml_schema do
+    root "Filter", %__MODULE__{} do
+      element "FilterID" do
+        text :filter_id, transform: &empty_string_to_nil/1
+      end
+
+      element "ParentResource" do
+        text :parent_resource, transform: &empty_string_to_nil/1
+      end
+
+      element "ParentLookupName" do
+        text :parent_lookup_name, transform: &empty_string_to_nil/1
+      end
+
+      element "ChildResource" do
+        text :child_resource, transform: &empty_string_to_nil/1
+      end
+
+      element "ChildLookupName" do
+        text :child_lookup_name, transform: &empty_string_to_nil/1
+      end
+
+      element "NotShownByDefault" do
+        text :now_shown_by_default, transform: &parse_boolean/1
+      end
+
+      element "METADATA-FILTER_TYPE" do
+        attribute "Version", :filter_type_version, transform: &empty_string_to_nil/1
+        attribute "Date", :filter_type_date, transform: &parse_naive_date_time/1
+        child_element :filter_types, FilterType.standard_xml_schema(), list: true
+      end
+    end
+  end
 end

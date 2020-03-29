@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.UpdateHelp do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   defstruct [
     :metadata_entry_id,
     :update_help_id,
@@ -27,4 +30,20 @@ defmodule ExRets.Metadata.Resource.UpdateHelp do
 
   @typedoc "The value to be displayed to the user."
   @type value :: String.t()
+
+  def standard_xml_schema do
+    root "UpdateHelp", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "UpdateHelpID" do
+        text :update_help_id, transform: &empty_string_to_nil/1
+      end
+
+      element "Value" do
+        text :value, transform: &empty_string_to_nil/1
+      end
+    end
+  end
 end

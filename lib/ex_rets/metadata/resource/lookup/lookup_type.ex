@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource.Lookup.LookupType do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   defstruct [
     :metadata_entry_id,
     :long_value,
@@ -43,4 +46,24 @@ defmodule ExRets.Metadata.Resource.Lookup.LookupType do
   for a COMPACT format request.
   """
   @type value :: String.t()
+
+  def standard_xml_schema do
+    root "LookupType", %__MODULE__{} do
+      element "MetadataEntryID" do
+        text :metadata_entry_id, transform: &empty_string_to_nil/1
+      end
+
+      element "LongValue" do
+        text :long_value, transform: &empty_string_to_nil/1
+      end
+
+      element "ShortValue" do
+        text :short_value, transform: &empty_string_to_nil/1
+      end
+
+      element "Value" do
+        text :value, transform: &empty_string_to_nil/1
+      end
+    end
+  end
 end

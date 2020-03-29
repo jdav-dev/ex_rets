@@ -1,4 +1,7 @@
 defmodule ExRets.Metadata.Resource do
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   alias ExRets.Metadata.Resource.Class
   alias ExRets.Metadata.Resource.EditMask
   alias ExRets.Metadata.Resource.Lookup
@@ -199,4 +202,146 @@ defmodule ExRets.Metadata.Resource do
   available for this Resource.
   """
   @type validation_external_date :: NaiveDateTime.t() | nil
+
+  def standard_xml_schema do
+    root "Resource", %__MODULE__{} do
+      element "ResourceID" do
+        text :resource_id, transform: &empty_string_to_nil/1
+      end
+
+      element "StandardName" do
+        text :standard_name, transform: &empty_string_to_nil/1
+      end
+
+      element "VisibleName" do
+        text :visible_name, transform: &empty_string_to_nil/1
+      end
+
+      element "Description" do
+        text :description, transform: &empty_string_to_nil/1
+      end
+
+      element "KeyField" do
+        text :key_field, transform: &empty_string_to_nil/1
+      end
+
+      element "ClassCount" do
+        text :class_count, transform: &parse_integer/1
+      end
+
+      element "ClassVersion" do
+        text :class_version, transform: &empty_string_to_nil/1
+      end
+
+      element "ClassDate" do
+        text :class_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-CLASS" do
+        attribute "Version", :class_version, transform: &empty_string_to_nil/1
+        attribute "Date", :class_date, transform: &parse_naive_date_time/1
+        child_element :classes, Class.standard_xml_schema(), list: true
+      end
+
+      element "ObjectVersion" do
+        text :object_version, transform: &empty_string_to_nil/1
+      end
+
+      element "ObjectDate" do
+        text :object_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-OBJECT" do
+        attribute "Version", :object_version, transform: &empty_string_to_nil/1
+        attribute "Date", :object_date, transform: &parse_naive_date_time/1
+        child_element :objects, Object.standard_xml_schema(), list: true
+      end
+
+      element "SearchHelpVersion" do
+        text :search_help_version, transform: &empty_string_to_nil/1
+      end
+
+      element "SearchHelpDate" do
+        text :search_help_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-SEARCH_HELP" do
+        attribute "Version", :search_help_version, transform: &empty_string_to_nil/1
+        attribute "Date", :search_help_date, transform: &parse_naive_date_time/1
+        child_element :search_helps, SearchHelp.standard_xml_schema(), list: true
+      end
+
+      element "EditMaskVersion" do
+        text :edit_mask_version, transform: &empty_string_to_nil/1
+      end
+
+      element "EditMaskDate" do
+        text :edit_mask_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-EDITMASK" do
+        attribute "Version", :edit_mask_version, transform: &empty_string_to_nil/1
+        attribute "Date", :edit_mask_date, transform: &parse_naive_date_time/1
+        child_element :edit_masks, EditMask.standard_xml_schema(), list: true
+      end
+
+      element "LookupVersion" do
+        text :lookup_version, transform: &empty_string_to_nil/1
+      end
+
+      element "LookupDate" do
+        text :lookup_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-LOOKUP" do
+        attribute "Version", :lookup_version, transform: &empty_string_to_nil/1
+        attribute "Date", :lookup_date, transform: &parse_naive_date_time/1
+        child_element :lookups, Lookup.standard_xml_schema(), list: true
+      end
+
+      element "UpdateHelpVersion" do
+        text :update_help_version, transform: &empty_string_to_nil/1
+      end
+
+      element "UpdateHelpDate" do
+        text :update_help_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-UPDATE_HELP" do
+        attribute "Version", :update_help_version, transform: &empty_string_to_nil/1
+        attribute "Date", :update_help_date, transform: &parse_naive_date_time/1
+        child_element :update_helps, UpdateHelp.standard_xml_schema(), list: true
+      end
+
+      element "ValidationExpressionVersion" do
+        text :validation_expression_version, transform: &empty_string_to_nil/1
+      end
+
+      element "ValidationExpressionDate" do
+        text :validation_expression_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-VALIDATION_EXPRESSION" do
+        attribute "Version", :validation_expression_version, transform: &empty_string_to_nil/1
+        attribute "Date", :validation_expression_date, transform: &parse_naive_date_time/1
+
+        child_element :validation_expressions, ValidationExpression.standard_xml_schema(),
+          list: true
+      end
+
+      element "ValidationExternalVersion" do
+        text :validation_external_version, transform: &empty_string_to_nil/1
+      end
+
+      element "ValidationExternalDate" do
+        text :validation_external_date, transform: &parse_naive_date_time/1
+      end
+
+      element "METADATA-VALIDATION_EXTERNAL" do
+        attribute "Version", :validation_external_version, transform: &empty_string_to_nil/1
+        attribute "Date", :validation_external_date, transform: &parse_naive_date_time/1
+        child_element :validation_externals, ValidationExternal.standard_xml_schema(), list: true
+      end
+    end
+  end
 end
