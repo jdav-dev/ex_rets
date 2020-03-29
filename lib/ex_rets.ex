@@ -148,7 +148,9 @@ defmodule ExRets do
       http_client_implementation = rets_client.http_client_implementation
 
       with {:ok, _response, stream} <- Middleware.open_stream(rets_client, request) do
-        Xml.parse(Metadata.standard_xml_schema(), stream, http_client_implementation)
+        Metadata.standard_xml_schema()
+        |> RetsResponse.wrap_schema()
+        |> Xml.parse(stream, http_client_implementation)
       end
     end
   end

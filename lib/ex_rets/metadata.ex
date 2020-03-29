@@ -7,7 +7,6 @@ defmodule ExRets.Metadata do
   alias ExRets.Metadata.Filter
   alias ExRets.Metadata.ForeignKey
   alias ExRets.Metadata.Resource
-  alias ExRets.RetsResponse
 
   defstruct version: nil,
             date: nil,
@@ -110,69 +109,66 @@ defmodule ExRets.Metadata do
   @type filter_date :: NaiveDateTime.t()
 
   def standard_xml_schema do
-    RetsResponse.schema(
-      root "METADATA", %__MODULE__{} do
-        element "METADATA-SYSTEM" do
-          attribute "Version", :version, transform: &empty_string_to_nil/1
-          attribute "Date", :date, transform: &parse_naive_date_time/1
+    root "METADATA", %__MODULE__{} do
+      element "METADATA-SYSTEM" do
+        attribute "Version", :version, transform: &empty_string_to_nil/1
+        attribute "Date", :date, transform: &parse_naive_date_time/1
 
-          element "SYSTEM" do
-            attribute "SystemID", :system_id, transform: &empty_string_to_nil/1
+        element "SYSTEM" do
+          attribute "SystemID", :system_id, transform: &empty_string_to_nil/1
 
-            attribute "SystemDescription", :system_description,
-              transform: &parse_naive_date_time/1
+          attribute "SystemDescription", :system_description, transform: &parse_naive_date_time/1
 
-            attribute "TimeZoneOffset", :time_zone_offset, transform: &empty_string_to_nil/1
-            attribute "MetadataID", :metadata_id, transform: &empty_string_to_nil/1
+          attribute "TimeZoneOffset", :time_zone_offset, transform: &empty_string_to_nil/1
+          attribute "MetadataID", :metadata_id, transform: &empty_string_to_nil/1
 
-            element "COMMENTS" do
-              text :comments, transform: &empty_string_to_nil/1
-            end
+          element "COMMENTS" do
+            text :comments, transform: &empty_string_to_nil/1
+          end
 
-            element "ResourceVersion" do
-              text :resource_version, transform: &empty_string_to_nil/1
-            end
+          element "ResourceVersion" do
+            text :resource_version, transform: &empty_string_to_nil/1
+          end
 
-            element "ResourceDate" do
-              text :resource_date, transform: &parse_naive_date_time/1
-            end
+          element "ResourceDate" do
+            text :resource_date, transform: &parse_naive_date_time/1
+          end
 
-            element "METADATA-RESOURCE" do
-              attribute "Version", :resource_version, transform: &empty_string_to_nil/1
-              attribute "Date", :resource_date, transform: &parse_naive_date_time/1
-              child_element :resources, Resource.standard_xml_schema(), list: true
-            end
+          element "METADATA-RESOURCE" do
+            attribute "Version", :resource_version, transform: &empty_string_to_nil/1
+            attribute "Date", :resource_date, transform: &parse_naive_date_time/1
+            child_element :resources, Resource.standard_xml_schema(), list: true
+          end
 
-            element "ForeignKeyVersion" do
-              text :foreign_key_version, transform: &empty_string_to_nil/1
-            end
+          element "ForeignKeyVersion" do
+            text :foreign_key_version, transform: &empty_string_to_nil/1
+          end
 
-            element "ForeignKeyDate" do
-              text :foreign_key_date, transform: &parse_naive_date_time/1
-            end
+          element "ForeignKeyDate" do
+            text :foreign_key_date, transform: &parse_naive_date_time/1
+          end
 
-            element "METADATA-FOREIGN_KEY" do
-              attribute "Version", :foreign_key_version, transform: &empty_string_to_nil/1
-              attribute "Date", :foreign_key_date, transform: &parse_naive_date_time/1
-              child_element :foreign_keys, ForeignKey.standard_xml_schema(), list: true
-            end
+          element "METADATA-FOREIGN_KEY" do
+            attribute "Version", :foreign_key_version, transform: &empty_string_to_nil/1
+            attribute "Date", :foreign_key_date, transform: &parse_naive_date_time/1
+            child_element :foreign_keys, ForeignKey.standard_xml_schema(), list: true
+          end
 
-            element "FilterVersion" do
-              text :filter_version, transform: &empty_string_to_nil/1
-            end
+          element "FilterVersion" do
+            text :filter_version, transform: &empty_string_to_nil/1
+          end
 
-            element "FilterDate" do
-              text :filter_date, transform: &parse_naive_date_time/1
-            end
+          element "FilterDate" do
+            text :filter_date, transform: &parse_naive_date_time/1
+          end
 
-            element "METADATA-FILTER" do
-              attribute "Version", :filter_version, transform: &empty_string_to_nil/1
-              attribute "Date", :filter_date, transform: &parse_naive_date_time/1
-              child_element :filters, Filter.standard_xml_schema(), list: true
-            end
+          element "METADATA-FILTER" do
+            attribute "Version", :filter_version, transform: &empty_string_to_nil/1
+            attribute "Date", :filter_date, transform: &parse_naive_date_time/1
+            child_element :filters, Filter.standard_xml_schema(), list: true
           end
         end
       end
-    )
+    end
   end
 end

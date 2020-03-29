@@ -79,7 +79,7 @@ defmodule ExRets.RetsResponse do
     end)
   end
 
-  def schema(response_element) do
+  def wrap_schema(response_element) do
     root "RETS", %__MODULE__{} do
       attribute "ReplyCode", :reply_code, transform: &parse_integer/1
       attribute "ReplyText", :reply_text, transform: &empty_string_to_nil/1
