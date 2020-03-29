@@ -1,4 +1,4 @@
-defmodule ExRets.XmlHelpers do
+defmodule ExRets.StringParsers do
   def empty_string_to_nil(""), do: nil
   def empty_string_to_nil(value), do: value
 

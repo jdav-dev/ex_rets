@@ -1,5 +1,5 @@
 defmodule ExRets.Metadata.Resource.Object do
-  import ExRets.XmlHelpers, only: [empty_string_to_nil: 1]
+  import ExRets.StringParsers, only: [empty_string_to_nil: 1]
 
   defstruct [
     :metadata_entry_id,

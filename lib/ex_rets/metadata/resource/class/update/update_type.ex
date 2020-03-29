@@ -91,13 +91,13 @@ defmodule ExRets.Metadata.Resource.Class.Update.UpdateType do
   def parse_attributes(value) do
     value
     |> String.split(",")
-    |> Enum.map(&ExRets.XmlHelpers.parse_integer/1)
+    |> Enum.map(&ExRets.StringParsers.parse_integer/1)
   end
 
   def parse_validation_expression_id(value) do
     value
     |> String.split(",")
-    |> Enum.map(&ExRets.XmlHelpers.empty_string_to_nil/1)
+    |> Enum.map(&ExRets.StringParsers.empty_string_to_nil/1)
     |> Enum.reject(&is_nil/1)
   end
 end

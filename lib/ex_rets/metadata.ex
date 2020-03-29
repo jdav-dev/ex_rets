@@ -1,7 +1,8 @@
 defmodule ExRets.Metadata do
   @moduledoc since: "0.2.0"
 
-  use ExRets.Xml
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
 
   alias ExRets.Metadata.Filter
   alias ExRets.Metadata.Filter.FilterType
@@ -26,6 +27,7 @@ defmodule ExRets.Metadata do
   alias ExRets.Metadata.Resource.ValidationExternal
   alias ExRets.Metadata.Resource.ValidationExternal.ValidationExternalType
   alias ExRets.RetsResponse
+  alias ExRets.Xml
 
   defstruct version: nil,
             date: nil,
@@ -127,13 +129,14 @@ defmodule ExRets.Metadata do
   @typedoc since: "0.2.0"
   @type filter_date :: NaiveDateTime.t()
 
-  def schema do
-    root "RETS", %RetsResponse{} do
-      attribute "ReplyCode", :reply_code, transform: &parse_integer/1
-      attribute "ReplyText", :reply_text, transform: &empty_string_to_nil/1
+  def parse(stream, http_client_implementation) do
+    Xml.parse(standard_xml_schema(), stream, http_client_implementation)
+  end
 
-      element "METADATA" do
-        element "METADATA-SYSTEM", :response, %__MODULE__{} do
+  defp standard_xml_schema do
+    RetsResponse.schema(
+      root "METADATA", %__MODULE__{} do
+        element "METADATA-SYSTEM" do
           attribute "Version", :version, transform: &empty_string_to_nil/1
           attribute "Date", :date, transform: &parse_naive_date_time/1
 
@@ -1118,6 +1121,6 @@ defmodule ExRets.Metadata do
           end
         end
       end
-    end
+    )
   end
 end

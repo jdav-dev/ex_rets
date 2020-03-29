@@ -4,6 +4,9 @@ defmodule ExRets.RetsResponse do
   """
   @moduledoc since: "0.1.0"
 
+  import ExRets.StringParsers
+  import ExRets.Xml.Schema
+
   alias ExRets.BaseXmlParser
   alias ExRets.LoginResponse
   alias ExRets.LogoutResponse
@@ -74,5 +77,13 @@ defmodule ExRets.RetsResponse do
       _, acc ->
         acc
     end)
+  end
+
+  def schema(response_element) do
+    root "RETS", %__MODULE__{} do
+      attribute "ReplyCode", :reply_code, transform: &parse_integer/1
+      attribute "ReplyText", :reply_text, transform: &empty_string_to_nil/1
+      child_element :response, response_element
+    end
   end
 end
