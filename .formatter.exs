@@ -1,10 +1,11 @@
 locals_without_parens = [
+  attribute: 2,
   attribute: 3,
   child_element: 2,
   child_element: 3,
   element: 2,
-  element: 4,
   root: 3,
+  text: 1,
   text: 2
 ]
 
