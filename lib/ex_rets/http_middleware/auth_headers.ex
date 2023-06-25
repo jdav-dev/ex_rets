@@ -2,13 +2,13 @@ defmodule ExRets.Middleware.AuthHeaders do
   @moduledoc false
   @moduledoc since: "0.1.0"
 
+  @behaviour ExRets.Middleware
+
   alias ExRets.Credentials
   alias ExRets.HttpAuthentication
   alias ExRets.HttpRequest
   alias ExRets.HttpResponse
   alias ExRets.Middleware
-
-  @behaviour Middleware
 
   @impl Middleware
   @doc since: "0.1.0"

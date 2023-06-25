@@ -25,9 +25,10 @@ defmodule ExRets.MixProject do
 
   defp deps do
     [
+      {:credo, "~> 1.1", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.3", only: :dev, runtime: false},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.7", only: :dev, runtime: false},
-      {:credo, "~> 1.1", only: :dev, runtime: false}
+      {:gradient, github: "esl/gradient", only: :dev, runtime: false}
     ]
   end
 

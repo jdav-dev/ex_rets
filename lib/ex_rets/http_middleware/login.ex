@@ -2,11 +2,11 @@ defmodule ExRets.Middleware.Login do
   @moduledoc false
   @moduledoc since: "0.1.0"
 
+  @behaviour ExRets.Middleware
+
   alias ExRets.Credentials
   alias ExRets.HttpRequest
   alias ExRets.Middleware
-
-  @behaviour Middleware
 
   @impl Middleware
   @doc since: "0.1.0"

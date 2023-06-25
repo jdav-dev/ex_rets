@@ -4,8 +4,6 @@ defmodule ExRets do
   """
   @moduledoc since: "0.1.0"
 
-  require Logger
-
   alias ExRets.CapabilityUris
   alias ExRets.Credentials
   alias ExRets.HttpClient.Httpc
@@ -18,6 +16,8 @@ defmodule ExRets do
   alias ExRets.RetsResponse
   alias ExRets.SearchArguments
   alias ExRets.SearchResponse
+
+  require Logger
 
   @typedoc "RETS client."
   @typedoc since: "0.1.0"

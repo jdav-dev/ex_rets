@@ -2,24 +2,22 @@ defmodule ExRets.HttpClient.Httpc do
   @moduledoc false
   @moduledoc since: "0.1.0"
 
+  @behaviour ExRets.HttpClient
+
   use GenServer, restart: :transient
 
   alias ExRets.HttpClient
   alias ExRets.HttpRequest
   alias ExRets.HttpResponse
 
-  @behaviour HttpClient
-
-  @default_http_opts [ssl: [ciphers: :ssl.cipher_suites(:all, :"tlsv1.2")]]
+  @typedoc since: "0.1.0"
+  @type url :: String.t()
 
   @typedoc since: "0.1.0"
-  @type url :: charlist()
+  @type field :: [byte()]
 
   @typedoc since: "0.1.0"
-  @type field :: charlist()
-
-  @typedoc since: "0.1.0"
-  @type value :: charlist()
+  @type value :: String.t()
 
   @typedoc since: "0.1.0"
   @type header :: {field(), value()}
@@ -28,10 +26,10 @@ defmodule ExRets.HttpClient.Httpc do
   @type headers :: [header()]
 
   @typedoc since: "0.1.0"
-  @type content_type :: charlist()
+  @type content_type :: String.t()
 
   @typedoc since: "0.1.0"
-  @type body :: String.t() | charlist()
+  @type body :: String.t()
 
   @typedoc since: "0.1.0"
   @type request :: {url(), headers()} | {url(), headers(), content_type(), body()}
@@ -185,7 +183,7 @@ defmodule ExRets.HttpClient.Httpc do
         {:http, {request_id, :stream_start, headers, httpc_stream_pid}},
         %{from: from, request_id: request_id} = state
       ) do
-    response = HttpResponse.from_httpc({{'HTTP/1.1', 200, 'OK'}, headers, ''})
+    response = HttpResponse.from_httpc({{'HTTP/1.1', 200, 'OK'}, headers, ""})
     GenServer.reply(from, {:ok, response})
     {:noreply, %{state | from: nil, httpc_stream_pid: httpc_stream_pid}}
   end

@@ -64,5 +64,7 @@ jobs:
         run: mix format --check-formatted --dry-run
       - name: credo
         run: mix credo --verbose
+      - name: gradient
+        run: mix gradient
       - name: dialyzer
         run: mix dialyzer --halt-exit-status
