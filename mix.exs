@@ -7,13 +7,15 @@ defmodule ExRets.MixProject do
     [
       app: :ex_rets,
       version: @version,
-      elixir: "~> 1.9",
+      elixir: "~> 1.14",
       name: "ExRets",
       description: "RETS client for Elixir.",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       docs: docs(),
-      package: package()
+      package: package(),
+      dialyzer: [plt_add_apps: [:ex_unit]],
+      preferred_cli_env: [credo: :test, dialyzer: :test, gradient: :test]
     ]
   end
 
@@ -25,10 +27,10 @@ defmodule ExRets.MixProject do
 
   defp deps do
     [
-      {:credo, "~> 1.1", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.3", only: :dev, runtime: false},
+      {:credo, "~> 1.1", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.3", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
-      {:gradient, github: "esl/gradient", only: :dev, runtime: false}
+      {:gradient, github: "esl/gradient", only: [:dev, :test], runtime: false}
     ]
   end
 
