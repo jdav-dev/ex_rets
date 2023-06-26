@@ -24,7 +24,6 @@ defmodule ExRets.Middleware do
   @callback call(HttpRequest.t(), next(), opts()) :: HttpResponse.t()
 
   @doc since: "0.1.0"
-  @dialyzer {:no_contracts, open_stream: 2}
   @spec open_stream(RetsClient.t(), HttpRequest.t()) ::
           {:ok, HttpResponse.t(), HttpClient.stream()}
           | {:ok, HttpResponse.t()}
