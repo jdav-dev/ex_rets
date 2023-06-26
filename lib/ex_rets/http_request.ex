@@ -30,8 +30,8 @@ defmodule ExRets.HttpRequest do
   end
 
   defp split_content_type_from_headers(headers) do
-    case List.keytake(headers, 'content-type', 0) do
-      nil -> {'text/plain', headers}
+    case List.keytake(headers, ~c"content-type", 0) do
+      nil -> {~c"text/plain", headers}
       {{_, ct}, headers} -> {ct, headers}
     end
   end

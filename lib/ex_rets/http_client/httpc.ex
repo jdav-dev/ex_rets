@@ -183,7 +183,7 @@ defmodule ExRets.HttpClient.Httpc do
         {:http, {request_id, :stream_start, headers, httpc_stream_pid}},
         %{from: from, request_id: request_id} = state
       ) do
-    response = HttpResponse.from_httpc({{'HTTP/1.1', 200, 'OK'}, headers, ""})
+    response = HttpResponse.from_httpc({{~c"HTTP/1.1", 200, ~c"OK"}, headers, ""})
     GenServer.reply(from, {:ok, response})
     {:noreply, %{state | from: nil, httpc_stream_pid: httpc_stream_pid}}
   end

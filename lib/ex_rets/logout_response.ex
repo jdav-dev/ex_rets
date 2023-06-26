@@ -28,7 +28,7 @@ defmodule ExRets.LogoutResponse do
     end
   end
 
-  defp event_fun({:startElement, _, 'RETS', _, attributes}, _, state) do
+  defp event_fun({:startElement, _, ~c"RETS", _, attributes}, _, state) do
     updated_rets_response =
       RetsResponse.read_rets_element_attributes(attributes, state.rets_response)
 
@@ -43,7 +43,7 @@ defmodule ExRets.LogoutResponse do
     put_in(state.characters, [characters | state.characters])
   end
 
-  defp event_fun({:endElement, _, 'RETS-RESPONSE', _}, _, state) do
+  defp event_fun({:endElement, _, ~c"RETS-RESPONSE", _}, _, state) do
     key_value_body =
       state.characters
       |> Enum.reverse()

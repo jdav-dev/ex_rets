@@ -6,8 +6,8 @@ defmodule ExRets.RetsResponseTest do
   doctest RetsResponse
 
   @attributes [
-    {[], [], 'ReplyCode', '0'},
-    {[], [], 'ReplyText', 'Operation Successful'}
+    {[], [], ~c"ReplyCode", ~c"0"},
+    {[], [], ~c"ReplyText", ~c"Operation Successful"}
   ]
 
   describe "read_rets_element_attributes/2" do

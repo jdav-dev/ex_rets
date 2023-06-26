@@ -8,7 +8,8 @@ defmodule ExRets.HttpResponseTest do
   describe "from_httpc/1" do
     test "dumps an :httpc response" do
       httpc_response =
-        {{'HTTP/1.1', 200, 'OK'}, [{'cache-control', 'private, max-age=0'}], 'Hello, World!'}
+        {{~c"HTTP/1.1", 200, ~c"OK"}, [{~c"cache-control", ~c"private, max-age=0"}],
+         ~c"Hello, World!"}
 
       assert %HttpResponse{
                status: 200,

@@ -47,16 +47,16 @@ defmodule ExRets.SearchResponse do
     end
   end
 
-  defp event_fun({:startElement, _, 'RETS', _, attributes}, _, state) do
+  defp event_fun({:startElement, _, ~c"RETS", _, attributes}, _, state) do
     updated_rets_response =
       RetsResponse.read_rets_element_attributes(attributes, state.rets_response)
 
     %{state | rets_response: updated_rets_response}
   end
 
-  defp event_fun({:startElement, _, 'COUNT', _, attributes}, _, state) do
+  defp event_fun({:startElement, _, ~c"COUNT", _, attributes}, _, state) do
     Enum.reduce(attributes, state, fn
-      {_, _, 'Records', value}, acc ->
+      {_, _, ~c"Records", value}, acc ->
         count = value |> to_string() |> String.to_integer()
         put_in(acc.rets_response.response.count, count)
 
@@ -65,9 +65,9 @@ defmodule ExRets.SearchResponse do
     end)
   end
 
-  defp event_fun({:startElement, _, 'DELIMITER', _, attributes}, _, state) do
+  defp event_fun({:startElement, _, ~c"DELIMITER", _, attributes}, _, state) do
     Enum.reduce(attributes, state, fn
-      {_, _, 'value', value}, acc ->
+      {_, _, ~c"value", value}, acc ->
         value = to_string(value)
 
         case CompactDelimiter.decode(value) do
@@ -80,7 +80,7 @@ defmodule ExRets.SearchResponse do
     end)
   end
 
-  defp event_fun({:startElement, _, 'MAXROWS', _, _attributes}, _, state) do
+  defp event_fun({:startElement, _, ~c"MAXROWS", _, _attributes}, _, state) do
     put_in(state.rets_response.response.max_rows, true)
   end
 
@@ -92,7 +92,7 @@ defmodule ExRets.SearchResponse do
     put_in(state.characters, [characters | state.characters])
   end
 
-  defp event_fun({:endElement, _, 'COLUMNS', _}, _, state) do
+  defp event_fun({:endElement, _, ~c"COLUMNS", _}, _, state) do
     columns =
       state.characters
       |> Enum.reverse()
@@ -102,7 +102,7 @@ defmodule ExRets.SearchResponse do
     put_in(state.rets_response.response.columns, columns)
   end
 
-  defp event_fun({:endElement, _, 'DATA', _}, _, state) do
+  defp event_fun({:endElement, _, ~c"DATA", _}, _, state) do
     row =
       state.characters
       |> Enum.reverse()

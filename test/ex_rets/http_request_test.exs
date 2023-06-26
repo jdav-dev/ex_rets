@@ -14,7 +14,7 @@ defmodule ExRets.HttpRequestTest do
         headers: [{"authorization", "letmein=please"}]
       }
 
-      assert {"https://example.com/login", [{'authorization', 'letmein=please'}]} =
+      assert {"https://example.com/login", [{~c"authorization", ~c"letmein=please"}]} =
                HttpRequest.to_httpc(request)
     end
 
@@ -27,8 +27,8 @@ defmodule ExRets.HttpRequestTest do
         body: ~s/{"letmein":"please"}/
       }
 
-      assert {"https://example.com/login", [{'authorization', 'letmein=please'}],
-              'application/json', ~s/{"letmein":"please"}/} = HttpRequest.to_httpc(request)
+      assert {"https://example.com/login", [{~c"authorization", ~c"letmein=please"}],
+              ~c"application/json", ~s/{"letmein":"please"}/} = HttpRequest.to_httpc(request)
     end
 
     @tag :unit
@@ -39,7 +39,7 @@ defmodule ExRets.HttpRequestTest do
         body: "pretty please"
       }
 
-      assert {"https://example.com/login", [], 'text/plain', "pretty please"} =
+      assert {"https://example.com/login", [], ~c"text/plain", "pretty please"} =
                HttpRequest.to_httpc(request)
     end
   end
