@@ -96,7 +96,7 @@ defmodule ExRets.SearchResponse do
     columns =
       state.characters
       |> Enum.reverse()
-      |> IO.iodata_to_binary()
+      |> IO.chardata_to_string()
       |> CompactRecord.decode()
 
     put_in(state.rets_response.response.columns, columns)
@@ -106,7 +106,7 @@ defmodule ExRets.SearchResponse do
     row =
       state.characters
       |> Enum.reverse()
-      |> IO.iodata_to_binary()
+      |> IO.chardata_to_string()
       |> CompactRecord.decode()
 
     put_in(state.rets_response.response.rows, [row | state.rets_response.response.rows])
