@@ -13,7 +13,7 @@ defmodule ExRets.RetsClient do
   @type t :: %__MODULE__{
           credentials: Credentials.t(),
           http_client: HttpClient.client(),
-          http_client_implementation: Httpc | Mock,
+          http_client_implementation: module(),
           http_timeout: non_neg_integer() | :infinity,
           login_response: LoginResponse.t(),
           middleware: [Middleware.t()]

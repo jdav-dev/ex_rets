@@ -19,10 +19,6 @@ defmodule ExRets do
 
   require Logger
 
-  @typedoc "RETS client."
-  @typedoc since: "0.1.0"
-  @opaque client :: RetsClient.t()
-
   @typedoc "Options for the RETS client."
   @typedoc since: "0.1.0"
   @type opts :: [timeout: integer()]
@@ -45,7 +41,7 @@ defmodule ExRets do
   """
   @doc since: "0.1.0"
   @spec login(Credentials.t(), opts()) ::
-          {:ok, client()} | {:ok, HttpResponse.t()} | {:error, reason()}
+          {:ok, RetsClient.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def login(%Credentials{} = credentials, opts \\ []) do
     with {:ok, rets_client} <- new_rets_client(credentials, opts) do
       login_client(rets_client)
@@ -97,7 +93,8 @@ defmodule ExRets do
   An `:error` tuple is returned for any other issues.
   """
   @doc since: "0.1.0"
-  @spec logout(client()) :: {:ok, RetsResponse.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
+  @spec logout(RetsClient.t()) ::
+          {:ok, RetsResponse.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def logout(%RetsClient{} = rets_client) do
     logout_uri = rets_client.login_response.capability_uris.logout
     request = %HttpRequest{uri: logout_uri}
@@ -118,7 +115,7 @@ defmodule ExRets do
   An `:error` tuple is returned for any other issues.
   """
   @doc since: "0.1.0"
-  @spec search(client(), SearchArguments.t()) ::
+  @spec search(RetsClient.t(), SearchArguments.t()) ::
           {:ok, RetsResponse.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def search(
         %RetsClient{
