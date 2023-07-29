@@ -2,11 +2,11 @@ defmodule ExRets.Middleware.DefaultHeaders do
   @moduledoc false
   @moduledoc since: "0.1.0"
 
+  @behaviour ExRets.Middleware
+
   alias ExRets.Credentials
   alias ExRets.HttpRequest
   alias ExRets.Middleware
-
-  @behaviour Middleware
 
   @project_version Keyword.fetch!(Mix.Project.config(), :version)
   @default_user_agent "ExRets/#{@project_version}"

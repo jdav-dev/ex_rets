@@ -8,14 +8,14 @@ defmodule ExRets.RetsClient do
   alias ExRets.Middleware
 
   @typedoc since: "0.1.0"
-  @opaque t :: %__MODULE__{
-            credentials: Credentials.t(),
-            http_client: HttpClient.client(),
-            http_client_implementation: Httpc | Mock,
-            http_timeout: non_neg_integer() | :infinity,
-            login_response: LoginResponse.t(),
-            middleware: [Middleware.t()]
-          }
+  @type t :: %__MODULE__{
+          credentials: Credentials.t(),
+          http_client: HttpClient.client(),
+          http_client_implementation: module(),
+          http_timeout: non_neg_integer() | :infinity,
+          login_response: LoginResponse.t(),
+          middleware: [Middleware.t()]
+        }
 
   @derive {Inspect, only: [:credentials]}
   defstruct [

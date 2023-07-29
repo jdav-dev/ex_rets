@@ -159,9 +159,7 @@ defmodule ExRets.DigestAccessAuthentication.Response do
           | qop: :auth,
             response:
               md5_then_hex(
-                "#{ha1}:#{response.nonce}:#{format_nonce_count(response.nc)}:#{response.cnonce}:#{
-                  qop_value_to_string(:auth)
-                }:#{ha2}"
+                "#{ha1}:#{response.nonce}:#{format_nonce_count(response.nc)}:#{response.cnonce}:#{qop_value_to_string(:auth)}:#{ha2}"
               )
         }
 
@@ -171,9 +169,7 @@ defmodule ExRets.DigestAccessAuthentication.Response do
           | qop: :auth_int,
             response:
               md5_then_hex(
-                "#{ha1}:#{response.nonce}:#{format_nonce_count(response.nc)}:#{response.cnonce}:#{
-                  qop_value_to_string(:auth_int)
-                }:#{ha2}"
+                "#{ha1}:#{response.nonce}:#{format_nonce_count(response.nc)}:#{response.cnonce}:#{qop_value_to_string(:auth_int)}:#{ha2}"
               )
         }
 

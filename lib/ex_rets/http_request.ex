@@ -11,29 +11,27 @@ defmodule ExRets.HttpRequest do
           method: :get | :post,
           uri: URI.t(),
           headers: ExRets.HttpClient.headers(),
-          body: String.t()
+          body: String.t() | nil
         }
 
   @doc false
   @spec to_httpc(t()) :: Httpc.request()
   def to_httpc(%__MODULE__{} = request) do
-    uri = request.uri |> to_string() |> to_charlist()
+    uri = to_string(request.uri)
     headers = Enum.map(request.headers, fn {k, v} -> {to_charlist(k), to_charlist(v)} end)
+    body = request.body
 
-    case request.method do
-      :get ->
-        {uri, headers}
-
-      :post ->
-        {content_type, headers} = split_content_type_from_headers(headers)
-        body = to_charlist(request.body)
-        {uri, headers, content_type, body}
+    if request.method == :post and is_binary(body) do
+      {content_type, headers} = split_content_type_from_headers(headers)
+      {uri, headers, content_type, body}
+    else
+      {uri, headers}
     end
   end
 
   defp split_content_type_from_headers(headers) do
-    case List.keytake(headers, 'content-type', 0) do
-      nil -> {'text/plain', headers}
+    case List.keytake(headers, ~c"content-type", 0) do
+      nil -> {~c"text/plain", headers}
       {{_, ct}, headers} -> {ct, headers}
     end
   end

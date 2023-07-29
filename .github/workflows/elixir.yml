@@ -1,68 +1,116 @@
 name: Elixir CI
 
-on: push
+# Define workflow that runs when changes are pushed to the
+# `main` branch or pushed to a PR branch that targets the `main`
+# branch. Change the branch name if your project uses a
+# different name for the main branch like "master" or "production".
+on:
+  push:
+    branches: ["main"] # adapt branch for project
+  pull_request:
+    branches: ["main"] # adapt branch for project
+
+# Sets the ENV `MIX_ENV` to `test` for running tests
+env:
+  MIX_ENV: test
+
+permissions:
+  contents: read
 
 jobs:
-  compile:
-    runs-on: ubuntu-latest
-    container:
-      image: elixir:1.9.4-slim
-    env:
-      MIX_ENV: prod
-    steps:
-      - uses: actions/checkout@v1
-      - name: install dependencies
-        run: |
-          mix local.rebar --force
-          mix local.hex --force
-          mix deps.get --only prod
-      - name: compile
-        run: mix compile --force
-
   test:
-    runs-on: ubuntu-latest
-    container:
-      image: elixir:1.9.4-slim
-    env:
-      MIX_ENV: test
+    runs-on: ubuntu-20.04
+    name: Test on OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
+    strategy:
+      # Specify the OTP and Elixir versions to use when building
+      # and running the workflow steps.
+      matrix:
+        otp: ["25.3.2.2", "26.0.1"] # Define the OTP version [required]
+        elixir: ["1.14.5", "1.15.0"] # Define the elixir version [required]
     steps:
-      - uses: actions/checkout@v1
-      - name: install dependencies
-        run: |
-          mix local.rebar --force
-          mix local.hex --force
-          mix deps.get --only test
-      - name: test
-        run: mix test --cover --trace
-      - name: archive code coverage
-        uses: actions/upload-artifact@v1
+      # Step: Setup Elixir + Erlang image as the base.
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
         with:
-          name: cover
-          path: cover
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
 
-  static_code_analysis:
-    runs-on: ubuntu-latest
-    container:
-      image: elixir:1.9.4-slim
-    env:
-      MIX_ENV: dev
-    steps:
-      - uses: actions/checkout@v1
-      - name: install dependencies
-        run: |
-          mix local.rebar --force
-          mix local.hex --force
-          mix deps.get --only dev
-      - name: plt cache
-        uses: actions/cache@v1.1.0
+      # Step: Check out the code.
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step: Define how to cache deps. Restores existing cache if present.
+      - name: Cache deps
+        id: cache-deps
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-elixir-deps
+        with:
+          path: deps
+          key: ${{ runner.os }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-${{ env.cache-name }}-
+
+      # Step: Define how to cache the `_build` directory. After the first run,
+      # this speeds up tests runs a lot. This includes not re-compiling our
+      # project's downloaded deps every run.
+      - name: Cache compiled build
+        id: cache-build
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-compiled-build
         with:
           path: _build
-          key: ${{ runner.os }}-plt-${{ env.GITHUB_REF }}
+          key: ${{ runner.os }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
           restore-keys: |
-            ${{ runner.os }}-plt-
-      - name: formatted?
-        run: mix format --check-formatted --dry-run
-      - name: credo
-        run: mix credo --verbose
-      - name: dialyzer
-        run: mix dialyzer --halt-exit-status
+            ${{ runner.os }}-mix-${{ env.cache-name }}-
+            ${{ runner.os }}-mix-
+
+      # Step: Conditionally bust the cache when job is re-run.
+      # Sometimes, we may have issues with incremental builds that are fixed by
+      # doing a full recompile. In order to not waste dev time on such trivial
+      # issues (while also reaping the time savings of incremental builds for
+      # *most* day-to-day development), force a full recompile only on builds
+      # that are retried.
+      - name: Clean to rule out incremental build as a source of flakiness
+        if: github.run_attempt != '1'
+        run: |
+          mix deps.clean --all
+          mix clean
+        shell: sh
+
+      # Step: Download project dependencies. If unchanged, uses
+      # the cached version.
+      - name: Install dependencies
+        run: mix deps.get
+
+      # Step: Compile the project treating any warnings as errors.
+      # Customize this step if a different behavior is desired.
+      - name: Compiles without warnings
+        run: mix compile --warnings-as-errors
+
+      # Step: Check that the checked in code has already been formatted.
+      # This step fails if something was found unformatted.
+      # Customize this step as desired.
+      - name: Check Formatting
+        run: mix format --check-formatted
+
+      # Step: Execute the tests.
+      - name: Run tests
+        if: success() || failure()
+        run: mix test
+
+      # Step: Run credo.
+      - name: Run credo
+        if: success() || failure()
+        run: mix credo
+
+      # Step: Run dialyzer.
+      - name: Run dialyzer
+        if: success() || failure()
+        run: mix dialyzer
+
+      # Step: Run gradient.
+      - name: Run gradient
+        if: success() || failure()
+        run: mix gradient

@@ -4,8 +4,6 @@ defmodule ExRets do
   """
   @moduledoc since: "0.1.0"
 
-  require Logger
-
   alias ExRets.CapabilityUris
   alias ExRets.Credentials
   alias ExRets.HttpClient.Httpc
@@ -19,9 +17,7 @@ defmodule ExRets do
   alias ExRets.SearchArguments
   alias ExRets.SearchResponse
 
-  @typedoc "RETS client."
-  @typedoc since: "0.1.0"
-  @opaque client :: RetsClient.t()
+  require Logger
 
   @typedoc "Options for the RETS client."
   @typedoc since: "0.1.0"
@@ -45,13 +41,10 @@ defmodule ExRets do
   """
   @doc since: "0.1.0"
   @spec login(Credentials.t(), opts()) ::
-          {:ok, client()} | {:ok, HttpResponse.t()} | {:error, reason()}
+          {:ok, RetsClient.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def login(%Credentials{} = credentials, opts \\ []) do
     with {:ok, rets_client} <- new_rets_client(credentials, opts) do
-      rets_client
-      |> login_fun()
-      |> Task.async()
-      |> Task.await(:infinity)
+      login_client(rets_client)
     end
   end
 
@@ -79,17 +72,15 @@ defmodule ExRets do
     end
   end
 
-  defp login_fun(%RetsClient{} = rets_client) do
-    fn ->
-      login_uri = rets_client.credentials.login_uri
-      request = %HttpRequest{uri: login_uri}
-      http_client_implementation = rets_client.http_client_implementation
+  defp login_client(%RetsClient{} = rets_client) do
+    login_uri = rets_client.credentials.login_uri
+    request = %HttpRequest{uri: login_uri}
+    http_client_implementation = rets_client.http_client_implementation
 
-      with {:ok, _response, stream} <- Middleware.open_stream(rets_client, request),
-           {:ok, rets_response} <-
-             LoginResponse.parse(stream, login_uri, http_client_implementation) do
-        {:ok, %RetsClient{rets_client | login_response: rets_response.response}}
-      end
+    with {:ok, _response, stream} <- Middleware.open_stream(rets_client, request),
+         {:ok, rets_response} <-
+           LoginResponse.parse(stream, login_uri, http_client_implementation) do
+      {:ok, %RetsClient{rets_client | login_response: rets_response.response}}
     end
   end
 
@@ -102,26 +93,16 @@ defmodule ExRets do
   An `:error` tuple is returned for any other issues.
   """
   @doc since: "0.1.0"
-  @dialyzer {:no_contracts, logout: 1}
-  @spec logout(client()) ::
+  @spec logout(RetsClient.t()) ::
           {:ok, RetsResponse.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def logout(%RetsClient{} = rets_client) do
-    rets_client
-    |> logout_fun()
-    |> Task.async()
-    |> Task.await(:infinity)
-  end
+    logout_uri = rets_client.login_response.capability_uris.logout
+    request = %HttpRequest{uri: logout_uri}
+    http_client_implementation = rets_client.http_client_implementation
 
-  defp logout_fun(%RetsClient{} = rets_client) do
-    fn ->
-      logout_uri = rets_client.login_response.capability_uris.logout
-      request = %HttpRequest{uri: logout_uri}
-      http_client_implementation = rets_client.http_client_implementation
-
-      with {:ok, _response, stream} <- Middleware.open_stream(rets_client, request),
-           :ok <- http_client_implementation.stop_client(rets_client.http_client) do
-        LogoutResponse.parse(stream, http_client_implementation)
-      end
+    with {:ok, _response, stream} <- Middleware.open_stream(rets_client, request),
+         :ok <- http_client_implementation.stop_client(rets_client.http_client) do
+      LogoutResponse.parse(stream, http_client_implementation)
     end
   end
 
@@ -134,8 +115,7 @@ defmodule ExRets do
   An `:error` tuple is returned for any other issues.
   """
   @doc since: "0.1.0"
-  @dialyzer {:no_contracts, search: 2}
-  @spec search(client(), SearchArguments.t()) ::
+  @spec search(RetsClient.t(), SearchArguments.t()) ::
           {:ok, RetsResponse.t()} | {:ok, HttpResponse.t()} | {:error, reason()}
   def search(
         %RetsClient{
@@ -145,22 +125,13 @@ defmodule ExRets do
         } = rets_client,
         %SearchArguments{} = search_arguments
       ) do
-    rets_client
-    |> search_fun(search_arguments)
-    |> Task.async()
-    |> Task.await(:infinity)
-  end
+    search_uri = rets_client.login_response.capability_uris.search
+    body = SearchArguments.encode_query(search_arguments)
+    request = %HttpRequest{method: :post, uri: search_uri, body: body}
+    http_client_implementation = rets_client.http_client_implementation
 
-  defp search_fun(%RetsClient{} = rets_client, search_arguments) do
-    fn ->
-      search_uri = rets_client.login_response.capability_uris.search
-      body = SearchArguments.encode_query(search_arguments)
-      request = %HttpRequest{method: :post, uri: search_uri, body: body}
-      http_client_implementation = rets_client.http_client_implementation
-
-      with {:ok, _response, stream} <- Middleware.open_stream(rets_client, request) do
-        SearchResponse.parse(stream, http_client_implementation)
-      end
+    with {:ok, _response, stream} <- Middleware.open_stream(rets_client, request) do
+      SearchResponse.parse(stream, http_client_implementation)
     end
   end
 end

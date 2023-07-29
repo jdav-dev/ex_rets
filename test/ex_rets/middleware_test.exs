@@ -30,7 +30,7 @@ defmodule ExRets.MiddlewareTest do
 
   @request %HttpRequest{uri: @login_uri}
 
-  defmodule __MODULE__.MockMiddleware do
+  defmodule MockMiddleware do
     @behaviour Middleware
 
     @impl Middleware
@@ -47,8 +47,6 @@ defmodule ExRets.MiddlewareTest do
       end
     end
   end
-
-  alias __MODULE__.MockMiddleware
 
   describe "open_stream/2" do
     test "calls middleware" do

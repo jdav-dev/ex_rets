@@ -50,11 +50,11 @@ defmodule ExRets.RetsResponse do
   @spec read_rets_element_attributes(BaseXmlParser.attributes(), t()) :: t()
   def read_rets_element_attributes(attributes, %__MODULE__{} = rets_response) do
     Enum.reduce(attributes, rets_response, fn
-      {_, _, 'ReplyCode', value}, acc ->
+      {_, _, ~c"ReplyCode", value}, acc ->
         reply_code = value |> to_string() |> String.to_integer()
         put_in(acc.reply_code, reply_code)
 
-      {_, _, 'ReplyText', value}, acc ->
+      {_, _, ~c"ReplyText", value}, acc ->
         reply_text = to_string(value)
         put_in(acc.reply_text, reply_text)
 

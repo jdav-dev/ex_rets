@@ -2,24 +2,22 @@ defmodule ExRets.HttpClient.Httpc do
   @moduledoc false
   @moduledoc since: "0.1.0"
 
+  @behaviour ExRets.HttpClient
+
   use GenServer, restart: :transient
 
   alias ExRets.HttpClient
   alias ExRets.HttpRequest
   alias ExRets.HttpResponse
 
-  @behaviour HttpClient
-
-  @default_http_opts [ssl: [ciphers: :ssl.cipher_suites(:all, :"tlsv1.2")]]
+  @typedoc since: "0.1.0"
+  @type url :: String.t()
 
   @typedoc since: "0.1.0"
-  @type url :: charlist()
+  @type field :: [byte()]
 
   @typedoc since: "0.1.0"
-  @type field :: charlist()
-
-  @typedoc since: "0.1.0"
-  @type value :: charlist()
+  @type value :: String.t()
 
   @typedoc since: "0.1.0"
   @type header :: {field(), value()}
@@ -28,10 +26,10 @@ defmodule ExRets.HttpClient.Httpc do
   @type headers :: [header()]
 
   @typedoc since: "0.1.0"
-  @type content_type :: charlist()
+  @type content_type :: String.t()
 
   @typedoc since: "0.1.0"
-  @type body :: String.t() | charlist()
+  @type body :: String.t()
 
   @typedoc since: "0.1.0"
   @type request :: {url(), headers()} | {url(), headers(), content_type(), body()}
@@ -50,6 +48,8 @@ defmodule ExRets.HttpClient.Httpc do
 
   @typedoc since: "0.1.0"
   @type result :: {status_line(), headers(), body()}
+
+  @error_http_client_stopped {:error, :http_client_stopped}
 
   # Interface
 
@@ -77,9 +77,7 @@ defmodule ExRets.HttpClient.Httpc do
           | {:error, ExRets.reason()}
   def open_stream(client, %HttpRequest{} = request, http_opts \\ [])
       when is_pid(client) and is_list(http_opts) do
-    with true <- Process.alive?(client),
-         {:ok, stream} <-
-           GenServer.start_link(__MODULE__, {client, request, http_opts}),
+    with {:ok, stream} <- GenServer.start_link(__MODULE__, {client, request, http_opts}),
          {:ok, %HttpResponse{status: 200} = response} <-
            GenServer.call(stream, :start_stream, :infinity) do
       {:ok, response, stream}
@@ -98,11 +96,10 @@ defmodule ExRets.HttpClient.Httpc do
   @impl HttpClient
   @doc since: "0.1.0"
   def close_stream(stream) when is_pid(stream) do
-    if Process.alive?(stream) do
-      GenServer.call(stream, :cancel_stream, :infinity)
-    else
-      :ok
-    end
+    GenServer.call(stream, :cancel_stream, :infinity)
+  catch
+    # GenServer doesn't exist
+    :exit, _e -> :ok
   end
 
   @impl HttpClient
@@ -136,8 +133,15 @@ defmodule ExRets.HttpClient.Httpc do
         from,
         %{client: client, http_opts: http_opts, request: request} = state
       ) do
-    {:ok, request_id} = start_async_request(client, request, http_opts)
+    httpc_request = HttpRequest.to_httpc(request)
+    http_opts = merge_default_http_opts(http_opts)
+
+    {:ok, request_id} =
+      :httpc.request(request.method, httpc_request, http_opts, httpc_opts(), client)
+
     {:noreply, %{state | from: from, request_id: request_id}}
+  catch
+    :exit, _e -> {:stop, :normal, @error_http_client_stopped, state}
   end
 
   def handle_call(
@@ -161,6 +165,8 @@ defmodule ExRets.HttpClient.Httpc do
         :ok = :httpc.stream_next(httpc_stream_pid)
         {:noreply, %{state | from: from}}
     end
+  catch
+    :exit, _e -> {:stop, :normal, @error_http_client_stopped, state}
   end
 
   def handle_call(:cancel_stream, _from, %{client: client, request_id: request_id} = state) do
@@ -185,7 +191,7 @@ defmodule ExRets.HttpClient.Httpc do
         {:http, {request_id, :stream_start, headers, httpc_stream_pid}},
         %{from: from, request_id: request_id} = state
       ) do
-    response = HttpResponse.from_httpc({{'HTTP/1.1', 200, 'OK'}, headers, ''})
+    response = HttpResponse.from_httpc({{~c"HTTP/1.1", 200, ~c"OK"}, headers, ""})
     GenServer.reply(from, {:ok, response})
     {:noreply, %{state | from: nil, httpc_stream_pid: httpc_stream_pid}}
   end
@@ -215,15 +221,65 @@ defmodule ExRets.HttpClient.Httpc do
     end
   end
 
-  defp start_async_request(client, %HttpRequest{} = request, http_opts) do
-    httpc_request = HttpRequest.to_httpc(request)
-    http_opts = merge_default_http_opts(http_opts)
+  defp merge_default_http_opts(http_opts) do
+    preferred_ciphers = ssl_preferred_ciphers()
+    ciphers = :ssl.filter_cipher_suites(preferred_ciphers, [])
+    versions = ssl_versions()
+    preferred_eccs = ssl_preferred_eccs()
+    eccs = :ssl.eccs() -- :ssl.eccs() -- preferred_eccs
 
-    :httpc.request(request.method, httpc_request, http_opts, httpc_opts(), client)
+    default_http_opts = [
+      ssl: [
+        verify: :verify_peer,
+        cacerts: :public_key.cacerts_get(),
+        depth: 3,
+        customize_hostname_check: [
+          match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+        ],
+        ciphers: ciphers,
+        versions: versions,
+        eccs: eccs
+      ]
+    ]
+
+    Keyword.merge(default_http_opts, http_opts)
   end
 
-  defp merge_default_http_opts(http_opts) do
-    Keyword.merge(@default_http_opts, http_opts)
+  defp ssl_preferred_ciphers do
+    :ex_rets
+    |> Application.get_env(__MODULE__, [])
+    |> Keyword.get(:ssl_preferred_ciphers, [
+      # Cipher suites (TLS 1.3): TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:
+      # TLS_CHACHA20_POLY1305_SHA256
+      %{cipher: :aes_128_gcm, key_exchange: :any, mac: :aead, prf: :sha256},
+      %{cipher: :aes_256_gcm, key_exchange: :any, mac: :aead, prf: :sha384},
+      %{cipher: :chacha20_poly1305, key_exchange: :any, mac: :aead, prf: :sha256},
+      # Cipher suites (TLS 1.2): ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:
+      # ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:
+      # ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
+      %{cipher: :aes_128_gcm, key_exchange: :ecdhe_ecdsa, mac: :aead, prf: :sha256},
+      %{cipher: :aes_128_gcm, key_exchange: :ecdhe_rsa, mac: :aead, prf: :sha256},
+      %{cipher: :aes_256_gcm, key_exchange: :ecdh_ecdsa, mac: :aead, prf: :sha384},
+      %{cipher: :aes_256_gcm, key_exchange: :ecdh_rsa, mac: :aead, prf: :sha384},
+      %{cipher: :chacha20_poly1305, key_exchange: :ecdhe_ecdsa, mac: :aead, prf: :sha256},
+      %{cipher: :chacha20_poly1305, key_exchange: :ecdhe_rsa, mac: :aead, prf: :sha256},
+      %{cipher: :aes_128_gcm, key_exchange: :dhe_rsa, mac: :aead, prf: :sha256},
+      %{cipher: :aes_256_gcm, key_exchange: :dhe_rsa, mac: :aead, prf: :sha384}
+    ])
+  end
+
+  defp ssl_versions do
+    :ex_rets
+    |> Application.get_env(__MODULE__, [])
+    # Protocols: TLS 1.2, TLS 1.3
+    |> Keyword.get(:ssl_versions, [:"tlsv1.2", :"tlsv1.3"])
+  end
+
+  defp ssl_preferred_eccs do
+    :ex_rets
+    |> Application.get_env(__MODULE__, [])
+    # TLS curves: X25519, prime256v1, secp384r1
+    |> Keyword.get(:ssl_preferred_eccs, [:secp256r1, :secp384r1])
   end
 
   defp httpc_opts do

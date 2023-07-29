@@ -2,12 +2,12 @@ defmodule ExRets.Middleware.Logger do
   @moduledoc false
   @moduledoc since: "0.1.0"
 
-  require Logger
+  @behaviour ExRets.Middleware
 
   alias ExRets.HttpRequest
   alias ExRets.Middleware
 
-  @behaviour Middleware
+  require Logger
 
   @impl Middleware
   @doc since: "0.1.0"

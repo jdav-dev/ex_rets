@@ -2,11 +2,11 @@ defmodule ExRets.HttpClient.Mock do
   @moduledoc false
   @moduledoc since: "0.1.0"
 
+  @behaviour ExRets.HttpClient
+
   alias ExRets.HttpClient
   alias ExRets.HttpRequest
   alias ExRets.HttpResponse
-
-  @behaviour HttpClient
 
   defstruct [:name, :response, :stream]
 

@@ -27,9 +27,9 @@ defmodule ExRets.HttpResponse do
   @doc false
   @doc since: "0.1.0"
   @spec from_httpc(Httpc.result()) :: t()
-  def from_httpc({{_, status, _}, headers, body}) do
+  def from_httpc({{_, status, _}, headers, body}) when is_integer(status) and status > 0 do
     headers = Enum.map(headers, fn {key, value} -> {to_string(key), to_string(value)} end)
-    body = IO.iodata_to_binary(body)
+    body = IO.chardata_to_string(body)
 
     %__MODULE__{
       status: status,
