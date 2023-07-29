@@ -4,8 +4,6 @@ defmodule ExRets.RetsClient do
 
   alias ExRets.Credentials
   alias ExRets.HttpClient
-  alias ExRets.HttpClient.Httpc
-  alias ExRets.HttpClient.Mock
   alias ExRets.LoginResponse
   alias ExRets.Middleware
 

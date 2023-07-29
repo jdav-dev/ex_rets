@@ -49,6 +49,8 @@ defmodule ExRets.HttpClient.Httpc do
   @typedoc since: "0.1.0"
   @type result :: {status_line(), headers(), body()}
 
+  @error_http_client_stopped {:error, :http_client_stopped}
+
   # Interface
 
   @impl HttpClient
@@ -75,9 +77,7 @@ defmodule ExRets.HttpClient.Httpc do
           | {:error, ExRets.reason()}
   def open_stream(client, %HttpRequest{} = request, http_opts \\ [])
       when is_pid(client) and is_list(http_opts) do
-    with true <- Process.alive?(client),
-         {:ok, stream} <-
-           GenServer.start_link(__MODULE__, {client, request, http_opts}),
+    with {:ok, stream} <- GenServer.start_link(__MODULE__, {client, request, http_opts}),
          {:ok, %HttpResponse{status: 200} = response} <-
            GenServer.call(stream, :start_stream, :infinity) do
       {:ok, response, stream}
@@ -96,11 +96,10 @@ defmodule ExRets.HttpClient.Httpc do
   @impl HttpClient
   @doc since: "0.1.0"
   def close_stream(stream) when is_pid(stream) do
-    if Process.alive?(stream) do
-      GenServer.call(stream, :cancel_stream, :infinity)
-    else
-      :ok
-    end
+    GenServer.call(stream, :cancel_stream, :infinity)
+  catch
+    # GenServer doesn't exist
+    :exit, _e -> :ok
   end
 
   @impl HttpClient
@@ -134,8 +133,15 @@ defmodule ExRets.HttpClient.Httpc do
         from,
         %{client: client, http_opts: http_opts, request: request} = state
       ) do
-    {:ok, request_id} = start_async_request(client, request, http_opts)
+    httpc_request = HttpRequest.to_httpc(request)
+    http_opts = merge_default_http_opts(http_opts)
+
+    {:ok, request_id} =
+      :httpc.request(request.method, httpc_request, http_opts, httpc_opts(), client)
+
     {:noreply, %{state | from: from, request_id: request_id}}
+  catch
+    :exit, _e -> {:stop, :normal, @error_http_client_stopped, state}
   end
 
   def handle_call(
@@ -159,6 +165,8 @@ defmodule ExRets.HttpClient.Httpc do
         :ok = :httpc.stream_next(httpc_stream_pid)
         {:noreply, %{state | from: from}}
     end
+  catch
+    :exit, _e -> {:stop, :normal, @error_http_client_stopped, state}
   end
 
   def handle_call(:cancel_stream, _from, %{client: client, request_id: request_id} = state) do
@@ -211,13 +219,6 @@ defmodule ExRets.HttpClient.Httpc do
       GenServer.reply(from, queued_reply)
       %{state | reply_queue: :queue.in(reply, reply_queue)}
     end
-  end
-
-  defp start_async_request(client, %HttpRequest{} = request, http_opts) do
-    httpc_request = HttpRequest.to_httpc(request)
-    http_opts = merge_default_http_opts(http_opts)
-
-    :httpc.request(request.method, httpc_request, http_opts, httpc_opts(), client)
   end
 
   defp merge_default_http_opts(http_opts) do

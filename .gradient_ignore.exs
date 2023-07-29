@@ -1,4 +1,4 @@
 [
-  "lib/ex_rets.ex:100",
-  "lib/ex_rets.ex:121"
+  "lib/ex_rets.ex:96",
+  "lib/ex_rets.ex:118"
 ]
